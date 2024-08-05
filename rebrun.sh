@@ -4,8 +4,8 @@ docker stop cputrackerapp
 #Remove the container
 docker container rm cputrackerapp
 
-# Define the path to your database file on the host machine
-DATABASE_PATH="/Users/arielrivera/Documents/GitHub/CPUTracker/cputracker.db"
+# Define the path to the database file on the host machine
+DATABASE_PATH="./cputracker.db"
 
 #Remove all images 
 docker rmi cputrackerapp_image
