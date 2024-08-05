@@ -1,26 +1,19 @@
 Outline of the application:
 
-- A python web application that uses streamlit.
-    Streamlit UI:
-
-        -Search Box: Use Streamlit's st.text_input component for the search box and Python's re module to implement the search logic.
-        - Use st.checkbox component that can be used for the toggle. Use a variable to track the current mode (search or input).
-        -Use Streamlit's st.selectbox component is perfect for the part number dropdown. Populate it with the unique part numbers from your database.
-        -Use Streamlit's st.dataframe component can be used to display the table. It provides basic sorting and filtering functionality. Use Streamlit's st.button component to add the reload, export, and double-click functionality.
-        -  Use a combination of st.empty and st.write to create custom popups. Use a variable to control the visibility of the popup.
+- A python web application that uses python's flask framework and Bootstrap for CSS library.
 
 - Uses SQLite as its database so we never loose the data. I should be able to connect to the database using any rdbms from outside the container. 
 - Uses docker to conteinerize it so it can be run anywyere .
     The container should be configured so that when it is launched it mounts specific OS folder so it can access files by a process that we'll define later. We'll refer to this as the "LOGS FOLDER". 
     - Create a Dockerfile to build the container. The Dockerfile should include the following:
-        - Install Python and Streamlit.
-        - Copy your application code.
+        - Install Python and flask and whatever else is needed for the web application and its requirements.
+        - Copy the application code.
         - Create a volume to mount the "LOGS FOLDER" from the host machine.
 
     - Provide the necesary docker run command. Make sure to specify the volume mapping to mount the "LOGS FOLDER".
 - Will need to run a Python Processes in the background sometimes when the user decides to:
 
-        -Use Python's multiprocessing module to run the background process. This will prevent the process from blocking the Streamlit UI.
+        -Use Python's multiprocessing module to run the background process. This will prevent the process from blocking the treamlit UI.
         -The background process will need to handle 7z Extraction,  use the py7zr library to extract files from 7z archives.
         - Use Python's os module to interact with the "LOGS FOLDER" and files.
 - Additional Considerations:
@@ -131,10 +124,10 @@ Basic functionality of the application:
         
     2- A section to show basic Status of the LOGS folder, if it exists, if it is empty or not and how many ".7z" files exists if any, etc...
 
-
+Starting the project:
 I want to break down the processes in steps:
 Step 1:
 
-Lets begin by settings things up before coding, I would like to start by the creation of the container so we can create the container image that runs a simmple hello world application with streamlit.Once we have a handle of this , like being able to fire up the container and being able to access the webapp in the browser and being able to shut it down and on again and it works fine. Make sure the process includes the mounting an OS folder into the container .  
+Lets begin by settings things up before coding, I would like to start by the creation of the container so we can create the container image that runs a simmple hello world application that connects to the DB and displays the records of the UNITS table.Once we have a handle of this , like being able to fire up the container and being able to access the webapp in the browser and being able to shut it down and on again and it works fine with the changes made to the database are permanent between restarts of the container. Make sure the process includes the mounting an OS folder into the container for full acccess to the sqlite database.
 
 When I'm satisfied I will let you know when we can move on to SETP 2, which I will define later. Ok ?

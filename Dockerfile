@@ -1,17 +1,18 @@
 FROM python:3.9
 
-# Install Streamlit
-RUN pip install streamlit
-
-# Create a directory for your application code
 WORKDIR /app
 
-# Copy your application code
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
 COPY . /app
+
+# # Mount the database volume
+# VOLUME /app/cputracker.db
 
 # Define the volume mapping for the "LOGS FOLDER"
 VOLUME /app/logs
 
-# Run the Streamlit app
-#CMD ["streamlit", "run", "sl_hw.py"]
-CMD ["streamlit", "run", "app.py"]
+EXPOSE 5000
+
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
