@@ -1,26 +1,87 @@
+<!DOCTYPE html>
+<html>
 <head>
+    <title>CPUTracker</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Handle tab clicks
+            $('.nav-link').click(function(event) {
+                event.preventDefault(); // Prevent default link behavior
+
+                // Remove 'active' class from all tabs
+                $('.nav-link').removeClass('active');
+
+                // Add 'active' class to the clicked tab
+                $(this).addClass('active');
+
+                // Get the target content ID (e.g., 'main-content', 'logs-content', 'settings-content')
+                var targetId = $(this).attr('href');
+
+                // Hide all content sections
+                $('.tab-content > div').hide();
+
+                // Show the target content section
+                $(targetId).show();
+            });
+
+            // Initial tab display (show 'Main' content by default)
+            $('#main-content').show();
+        });
+    </script>
 </head>
 <body>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Serial Number</th>
-            <th>Part Number</th>
-            <th>Datecode</th>
-            <th>Country</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for unit in units %}
-        <tr>
-            <td>{{ unit.serial_number }}</td>
-            <td>{{ unit.part_number }}</td>
-            <td>{{ unit.datecode }}</td>
-            <td>{{ unit.country }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <div class="container">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#main-content">Main</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#logs-content">LOGS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#settings-content">Settings</a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="tab-content">
+            <div id="main-content" class="tab-pane fade show active">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Serial Number</th>
+                            <th>Part Number</th>
+                            <th>Datecode</th>
+                            <th>Country</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for unit in units %}
+                        <tr>
+                            <td>{{ unit.serial_number }}</td>
+                            <td>{{ unit.part_number }}</td>
+                            <td>{{ unit.datecode }}</td>
+                            <td>{{ unit.country }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="logs-content" class="tab-pane fade">
+                {% include 'logs.html' %}
+            </div>
+
+            <div id="settings-content" class="tab-pane fade">
+                {% include 'settings.html' %}
+            </div>
+        </div>
+    </div>
 
 </body>
+</html>
