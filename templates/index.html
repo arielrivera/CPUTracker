@@ -1,0 +1,26 @@
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Serial Number</th>
+            <th>Part Number</th>
+            <th>Datecode</th>
+            <th>Country</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for unit in units %}
+        <tr>
+            <td>{{ unit.serial_number }}</td>
+            <td>{{ unit.part_number }}</td>
+            <td>{{ unit.datecode }}</td>
+            <td>{{ unit.country }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
