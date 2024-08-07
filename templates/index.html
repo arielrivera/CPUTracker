@@ -3,54 +3,66 @@
 <head>
     <title>CPUTracker</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='jquery-3.5.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
     <script>
-        $(document).ready(function() {
-            // Handle tab clicks
-            $('.nav-link').click(function(event) {
-                event.preventDefault(); // Prevent default link behavior
+            $(document).ready(function() {
+        // Handle tab clicks
+        $('.nav-link').on('click', function(event) {
+            event.preventDefault(); // Prevent default link behavior
 
-                // Remove 'active' class from all tabs
-                $('.nav-link').removeClass('active');
+            // Remove 'active' class from all tabs
+            $('.nav-link').removeClass('active');
 
-                // Add 'active' class to the clicked tab
-                $(this).addClass('active');
+            // Add 'active' class to the clicked tab
+            $(this).addClass('active');
 
-                // Get the target content ID (e.g., 'main-content', 'logs-content', 'settings-content')
-                var targetId = $(this).attr('href');
+            // Get the target content ID (e.g., 'home', 'logs', 'settings')
+            var targetId = $(this).attr('href');
 
-                // Hide all content sections
-                $('.tab-content > div').hide();
+            // Hide all content sections
+            $('.tab-content > .tab-pane').removeClass('show active');
 
-                // Show the target content section
-                $(targetId).show();
-            });
+            // Show the target content section
+            $(targetId).addClass('show active');
 
-            // Initial tab display (show 'Main' content by default)
-            $('#main-content').show();
+            // Load content for Logs tab
+            if (targetId === '#logs') {
+                $.get('/logs', function(data) {
+                    $('#logs').html(data);
+                });
+            }
+
+            // Load content for Settings tab
+            if (targetId === '#settings') {
+                $.get('/settings', function(data) {
+                    $('#settings').html(data);
+                });
+            }
         });
+
+        // Initial tab display (show 'Home' content by default)
+        $('#home').addClass('show active');
+    });
     </script>
 </head>
 <body>
     <div class="container">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <ul class="nav nav-tabs">
-                <li class="nav-item">
-                    <a class="nav-link active" href="#main-content">Main</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#logs-content">LOGS</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#settings-content">Settings</a>
-                </li>
-            </ul>
-        </nav>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="logs-tab" data-toggle="tab" href="#logs" role="tab" aria-controls="logs" aria-selected="false">Logs</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="settings-tab" data-toggle="tab" href="#settings" role="tab" aria-controls="settings" aria-selected="false">Settings</a>
+            </li>
+        </ul>
 
-        <div class="tab-content">
-            <div id="main-content" class="tab-pane fade show active">
+        <div class="tab-content" id="myTabContent">
+            <div id="home" class="tab-pane fade show active" role="tabpanel" aria-labelledby="home-tab">
                 <table class="table table-striped">
                     <thead>
                         <tr>
@@ -73,12 +85,16 @@
                 </table>
             </div>
 
-            <div id="logs-content" class="tab-pane fade">
-                {% include 'logs.html' %}
+            <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="logs-tab">
+                <h1>LOGS</h1>
+                <p>This is the logs page.</p>
+               
             </div>
 
-            <div id="settings-content" class="tab-pane fade">
-                {% include 'settings.html' %}
+            <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                <h1>Settings</h1>
+                <p>This is the settings page.</p>
+
             </div>
         </div>
     </div>

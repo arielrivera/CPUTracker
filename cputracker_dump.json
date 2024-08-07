@@ -1,0 +1,238 @@
+{
+    "LOGS": {
+        "schema": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "file_name",
+                "type": "VARCHAR(100)",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "serial_number",
+                "type": "VARCHAR(20)",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "host_status",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "csv_file_name",
+                "type": "VARCHAR(255)",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "csv_file_content",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "data": []
+    },
+    "sqlite_sequence": {
+        "schema": [
+            {
+                "cid": 0,
+                "name": "name",
+                "type": "",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 1,
+                "name": "seq",
+                "type": "",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "data": [
+            {
+                "name": "UNITS",
+                "seq": 5
+            }
+        ]
+    },
+    "UNITS": {
+        "schema": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "date_added",
+                "type": "DATETIME",
+                "notnull": 0,
+                "dflt_value": "CURRENT_TIMESTAMP",
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "date_last_modified",
+                "type": "DATETIME",
+                "notnull": 0,
+                "dflt_value": "CURRENT_TIMESTAMP",
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "serial_number",
+                "type": "VARCHAR(20)",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "part_number",
+                "type": "VARCHAR(20)",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "datecode",
+                "type": "VARCHAR(10)",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "country",
+                "type": "VARCHAR(15)",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "composite_snpn",
+                "type": "VARCHAR(30)",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "data": [
+            {
+                "id": 1,
+                "date_added": "2024-08-04 16:19:44",
+                "date_last_modified": "2024-08-04 16:19:44",
+                "serial_number": "9KQ5064X20158",
+                "part_number": "100-000000346",
+                "datecode": "20231020",
+                "country": "US",
+                "composite_snpn": "9KQ5064X20158_100-000000346"
+            },
+            {
+                "id": 2,
+                "date_added": "2024-08-04 16:19:44",
+                "date_last_modified": "2024-08-04 16:19:44",
+                "serial_number": "9KC4399M10022",
+                "part_number": "100-000000334",
+                "datecode": "20231021",
+                "country": "CN",
+                "composite_snpn": "9KC4399M10022_100-000000334"
+            },
+            {
+                "id": 3,
+                "date_added": "2024-08-04 16:19:44",
+                "date_last_modified": "2024-08-04 16:19:44",
+                "serial_number": "9KQ5064X20159",
+                "part_number": "100-000000347",
+                "datecode": "20231022",
+                "country": "US",
+                "composite_snpn": "9KQ5064X20159_100-000000347"
+            },
+            {
+                "id": 4,
+                "date_added": "2024-08-04 16:19:44",
+                "date_last_modified": "2024-08-04 16:19:44",
+                "serial_number": "9KC4399M10023",
+                "part_number": "100-000000335",
+                "datecode": "20231023",
+                "country": "CN",
+                "composite_snpn": "9KC4399M10023_100-000000335"
+            },
+            {
+                "id": 5,
+                "date_added": "2024-08-04 16:19:44",
+                "date_last_modified": "2024-08-04 16:19:44",
+                "serial_number": "9KQ5064X20160",
+                "part_number": "100-000000348",
+                "datecode": "20231024",
+                "country": "US",
+                "composite_snpn": "9KQ5064X20160_100-000000348"
+            }
+        ]
+    },
+    "AUDIT": {
+        "schema": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "serial_number",
+                "type": "VARCHAR(20)",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "date_time",
+                "type": "DATETIME",
+                "notnull": 0,
+                "dflt_value": "CURRENT_TIMESTAMP",
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "changes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "data": []
+    }
+}

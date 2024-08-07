@@ -1,4 +1,4 @@
-from flask import Flask, g, request, render_template
+from flask import Flask, g, request, render_template, Response
 import sqlite3
 from flask_bootstrap import Bootstrap
 
@@ -33,12 +33,16 @@ def index():
 
 @app.route('/logs')
 def logs():
+    # print("Accessing logs page")  # Debugging statement
     return render_template('logs.html')
+    # return Response("This is the logs page.", mimetype='text/plain')
 
 
 @app.route('/settings')
 def settings():
+    print("Accessing settings page")  # Debugging statement
     return render_template('settings.html')
+    # return Response("This is the settings page.", mimetype='text/plain')
 
 
 # Add this line to include Bootstrap in your HTML template
