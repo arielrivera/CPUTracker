@@ -40,6 +40,13 @@
                     $('#settings').html(data);
                 });
             }
+
+            // logout tab
+            if (targetId === '#logout') {
+                window.location.href = '/logout';
+            }
+
+
         });
 
         // Initial tab display (show 'Home' content by default)
@@ -58,6 +65,10 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="settings-tab" data-toggle="tab" href="#settings" role="tab" aria-controls="settings" aria-selected="false">Settings</a>
+            </li>
+            <li class="nav-item ml-auto">
+                <a class="nav-link" href="#logout">Logout</a>
+
             </li>
         </ul>
 
