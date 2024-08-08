@@ -34,6 +34,13 @@
                 });
             }
 
+            // Load content for home or maine tab
+            if (targetId === '#home') {
+                $.get('/home', function(data) {
+                    $('#home').html(data);
+                });
+            }
+
             // Load content for Settings tab
             if (targetId === '#settings') {
                 $.get('/settings', function(data) {
@@ -50,6 +57,9 @@
         });
 
         // Initial tab display (show 'Home' content by default)
+        $.get('/home', function(data) {
+            $('#home').html(data);
+        });
         $('#home').addClass('show active');
     });
     </script>
@@ -74,37 +84,16 @@
 
         <div class="tab-content" id="myTabContent">
             <div id="home" class="tab-pane fade show active" role="tabpanel" aria-labelledby="home-tab">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Serial Number</th>
-                            <th>Part Number</th>
-                            <th>Datecode</th>
-                            <th>Country</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for unit in units %}
-                        <tr>
-                            <td>{{ unit.serial_number }}</td>
-                            <td>{{ unit.part_number }}</td>
-                            <td>{{ unit.datecode }}</td>
-                            <td>{{ unit.country }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
             </div>
 
             <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="logs-tab">
-                <h1>LOGS</h1>
-                <p>This is the logs page.</p>
+
                
             </div>
 
             <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
-                <h1>Settings</h1>
-                <p>This is the settings page.</p>
+
 
             </div>
         </div>

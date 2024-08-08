@@ -29,24 +29,28 @@ def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
+    # db = get_db()
+    # units = db.execute('SELECT * FROM UNITS').fetchall()
+    # db.close()
+    # return render_template('index.html', units=units)
+    return render_template('index.html')
+
+@app.route('/home')
+def home():
     db = get_db()
     units = db.execute('SELECT * FROM UNITS').fetchall()
     db.close()
-    return render_template('index.html', units=units)
+    return render_template('home.html', units=units)
 
 
 @app.route('/logs')
 def logs():
-    # print("Accessing logs page")  # Debugging statement
     return render_template('logs.html')
-    # return Response("This is the logs page.", mimetype='text/plain')
 
 
 @app.route('/settings')
 def settings():
-    print("Accessing settings page")  # Debugging statement
     return render_template('settings.html')
-    # return Response("This is the settings page.", mimetype='text/plain')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
