@@ -1,4 +1,4 @@
-from flask import Flask, g, request, render_template, Response, jsonify, session, redirect, url_for
+from flask import Flask, g, request, render_template, Response, jsonify, session, redirect, url_for, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from flask_bootstrap import Bootstrap
@@ -62,7 +62,11 @@ def login():
         conn.close()
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
-            return redirect(url_for('index'))
+            # return redirect(url_for('index'))
+            mode = request.cookies.get('mode', 'search')  # Default to 'search' mode if not found
+            resp = make_response(redirect(url_for('index')))
+            resp.set_cookie('mode', mode)
+            return resp
         return 'Invalid credentials'
     return render_template('login.html')
     # return '''
@@ -101,7 +105,62 @@ def logout():
     return redirect(url_for('login'))
 
 
-# Add this line to include Bootstrap in your HTML template
+@app.route('/search', methods=['POST'])
+def search():
+    search_box = request.form.get('searchBox')
+    part_number = request.form.get('partNumber')
+    if not search_box:
+        return jsonify(error="Serial number is required"), 400
+
+    # Connect to the SQLite database
+    conn = sqlite3.connect('cputracker.db')  # Replace 'your_database.db' with your actual database file
+    cursor = conn.cursor()
+
+    # Construct the SQL query
+    if part_number.lower() == 'any':
+        query = "SELECT * FROM UNITS WHERE serial_number = ?"
+        # print(query)
+        params = (search_box,)
+    else:
+        query = "SELECT * FROM UNITS WHERE serial_number = ? AND part_number = ?"
+        params = (search_box, part_number)
+
+    # Execute the query and fetch the results
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+
+    # Close the database connection
+    conn.close()
+
+    # Convert the results to a list of dictionaries
+    results = []
+    for row in rows:
+        results.append({
+            'id': row[0],
+            'date_added': row[1],
+            'date_last_modified': row[2],
+            'serial_number': row[1],
+            'part_number': row[2],
+            'datecode': row[3],
+            'country': row[4],
+            'composite_snpn': row[5]
+        })
+
+    return jsonify(results=results)
+
+
+
+@app.route('/add', methods=['POST'])
+def add():
+    search_box = request.form.get('searchBox')
+    part_number = request.form.get('partNumber')
+    # Implement your add logic here
+    # For example, add the item to the database
+    success = True  # Replace with actual success status
+    return jsonify(success=success)
+
+
+
 app.jinja_env.add_extension('jinja2.ext.do')
 
 if __name__ == '__main__':

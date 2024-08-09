@@ -12,7 +12,7 @@ CREATE TABLE UNITS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
         date_last_modified DATETIME DEFAULT CURRENT_TIMESTAMP,
-        serial_number VARCHAR(20) NOT NULL,
+        serial_number VARCHAR(20) UNIQUE NOT NULL,
         part_number VARCHAR(20),
         datecode VARCHAR(10),
         country VARCHAR(15),

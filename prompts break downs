@@ -1,0 +1,33 @@
+Ok, I'm ready to focus on the Main , or home, section of the page. 
+
+ The Main/home area or tab interface page has 2 sections a top section and a bottom section , for now lets focus on the top section, the bottom sectio nwe can do later, for now the table in the home are we'll move down a little to make room to the top section which should be as follows:
+
+  1- A top section we'll call top topbar where we have the following controls in horizontal form, or inline fashion :
+  - Mode toggle, a toggle to similar to iOS toggles, to toggle between search mode or input mode.
+  Search mode should be default mode when the web app is loaded.
+  When toggled to input mode, the app adds records to the database. When in search mode the app searches the database. 
+  - A search box mostly intended to search for a serial number, but also a part number can be searched or a combination of serial number and part number can be ebtered to do a search in the SQLite database. The search box accepts searches for partial serial numbers.
+  The search box has to detect whether the user is searching for the following 3 cases:
+  I- A serial number, either a full serial or partial serial number, this string can identified if the string does not contain a dash or an underscore. Be mindfull that only alphanumberic characters , undersocre and dash are accepted in the search box.
+  II- A part number, this can be identified by a string that contains only a single dash and no underscore.
+  III- A special string that contains the serial number and the part number separated by an underscore, here is an example "9KQ5064X20158_100-000000346" , where the first part of the string is the serial number and the second part is the part number. When a special string like this is entered and the focus is lost from the search box the app has to attempt deconstructing the string, leave the serial number part in the search box, try to identify the part number and autoselect it in the part number drop down , if not found
+
+        - A Dropdown where to show all the different part numbers. Should have always a top option and defaulted as "Any". If the toggle is in input mode, and the dropdown is set to "Any" in case it was not set or auto identified, should be set to "100-000000000"; if we're in search mode then when searcing in the database then and the droopdown is ANY then the query should look for any in the part number field.
+
+        - A Search button . This search button changes its legend from "Search" in the default color to "Add" in red color, depending on the mode it's set with the toggle.
+
+
+
+
+
+
+
+                    if (isSearchMode) {
+                $('#actionButton').text('Search').removeClass('btn-danger').addClass('btn-primary');
+                $('#ToggleSwitch').text('Search Mode').removeAttr('style').add(Attr('style', 'color: crimson;'));
+            } else {
+                $('#actionButton').text('Add').removeClass('btn-danger').addClass('btn-primary');
+                $('#ToggleSwitch').text('Search').removeAttr('style').add(Attr('style', 'color: aliceblue;'));
+            } else {
+                $('#actionButton').text('Add').removeClass('btn-primary').addClass('btn-danger');
+            }

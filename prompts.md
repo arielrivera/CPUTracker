@@ -41,13 +41,14 @@ Basic functionality of the application:
   1- The main section, and default, called "Main".
   2- A section to handle compressed files loaded from the os into the databse, we'll call it "LOGS" section.
 
-- The Main section interface page has 2 sections as follows :
-  1- A top section we'll call topbar where we have the following in horizontal form :
-  -A toggle, similar to iOS toggles, to toggle between search mode or input mode.
+- The Main/home area or tab interface page has 2 sections as follows :
+  1- A top section we'll call top topbar where we have the following controls in horizontal form, or inline fashion :
+  - Mode toggle, a toggle to similar to iOS toggles, to toggle between search mode or input mode.
   Search mode should be default mode when the web app is loaded.
-  When toggled to input mode, the app adds records to the database. When in search mode the app searches the database. - A search box mostly intended to search for a serial number, but also a part number can be searched or a combination of serial number and part number can be ebtered to do a search in the SQLite database. The search box accepts searches for partial serial numbers.
+  When toggled to input mode, the app adds records to the database. When in search mode the app searches the database. 
+  - A search box mostly intended to search for a serial number, but also a part number can be searched or a combination of serial number and part number can be ebtered to do a search in the SQLite database. The search box accepts searches for partial serial numbers.
   The search box has to detect whether the user is searching for the following 3 cases:
-  I- A serial number, either a full serial or partian, this string can identified if the string does not contain a dash or an underscore. Be mindfull that only alphanumberic characters , undersocre and dash are accepted in the search box.
+  I- A serial number, either a full serial or partial serial number, this string can identified if the string does not contain a dash or an underscore. Be mindfull that only alphanumberic characters , undersocre and dash are accepted in the search box.
   II- A part number, this can be identified by a string that contains only a single dash and no underscore.
   III- A special string that contains the serial number and the part number separated by an underscore, here is an example "9KQ5064X20158_100-000000346" , where the first part of the string is the serial number and the second part is the part number. When a special string like this is entered and the focus is lost from the search box the app has to attempt deconstructing the string, leave the serial number part in the search box, try to identify the part number and autoselect it in the part number drop down , if not found
 
@@ -55,7 +56,9 @@ Basic functionality of the application:
 
         - A Search button . This search button changes its legend from "Search" in the default color to "Add" in red color, depending on the mode it's set with the toggle.
 
-  2- A bottom section that displays a table with rows and columns, has basic datatable functionality like sorting, filtering and pagination. Implement basic functionality in this table as follows : - Show pagination options, default to latest 10 records. - Atthe bottom of the table, could be apart of the table or separate from it whatever is easier to implement and maintain, there should be a section with buttons for options to reload the table so the web table can be refreshed in case the database table has changed, export the current records being shown in the page to csv, export the whole database table to csv. - When a record is double clicked on, a popup window or popup dialog should popup on top to show all the details of the record in a table, where the user could edit the fields or perform other actions based on the data of the record. Here are the actions that could be performed on the record in the popup :
+  2- A bottom section that displays a table with rows and columns, we already have this in the home section but has to be enhanced to support functionality like sorting, filtering and pagination. Implement basic functionality in this table as follows : 
+  
+  - Show pagination options, default to latest 10 records. - Atthe bottom of the table, could be apart of the table or separate from it whatever is easier to implement and maintain, there should be a section with buttons for options to reload the table so the web table can be refreshed in case the database table has changed, export the current records being shown in the page to csv, export the whole database table to csv. - When a record is double clicked on, a popup window or popup dialog should popup on top to show all the details of the record in a table, where the user could edit the fields or perform other actions based on the data of the record. Here are the actions that could be performed on the record in the popup :
   I- I should be able to select click on a record cell and edit all the editable fields if needed. We need to implement some sort of data log to keep track of all changes to the record after the record was inserted in the table, a log with data like date modified, field modified etc. This , I imagine, has to be a separate database table where the record_id would be used to tie the changes to a record in the main table, so the record_id in the log table should be in a field where it is not unique enforced.
   II- In this popup there should be another web table where we're going to show a list of records found in the "LOGS" table, only show the log_name field, for this record based on the serial number , we'll call this section "LOG FILES" and we'll define more functionality . Once one of this records is clicked on we will show yet another popup on top to display two other fileds from the selected LOGS table record, which will be two blobs of text. This popup will have a dismiss button to dismiss it and go back to the previous popup.
 

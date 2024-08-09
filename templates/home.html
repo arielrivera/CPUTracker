@@ -1,4 +1,37 @@
-<table class="table table-striped">
+   <!-- Topbar Section -->
+   <div class="navbar navbar-dark bg-dark">
+
+    <form class="col-12">
+        
+        <div class="form-row">
+          <div class="col-2">
+            <div class="custom-control custom-switch form-control-lg">
+                <input type="checkbox" class="custom-control-input form-control-lg" id="modeToggle" onchange="setModeCookie()">
+                <label id="ToggleSwitch" class="custom-control-label" for="modeToggle" style="color: aliceblue;" >Toggle Mode</label>
+            </div>
+          </div>
+          <div class="col-5">
+            <input type="text" class="form-control form-control-lg" id="searchBox" placeholder="Enter serial #">
+          </div>  
+          <div class="col col-3">
+            <select class="form-control form-control-lg" id="partNumberDropdown">
+                <option value="any">Any</option>
+                <!-- Add more options dynamically -->
+        
+            </select>
+          </div>
+          <div class="col-2">
+            <button class="btn-primary form-control form-control-lg" id="actionButton">Search</button>
+          </div>    
+        </div>
+ 
+    </form>
+    
+
+ </div>
+<div class="container">
+
+<table id='home_results_table' class="table table-striped">
     <thead>
         <tr>
             <th>Serial Number</th>
@@ -8,13 +41,182 @@
         </tr>
     </thead>
     <tbody>
-        {% for unit in units %}
-        <tr>
-            <td>{{ unit.serial_number }}</td>
-            <td>{{ unit.part_number }}</td>
-            <td>{{ unit.datecode }}</td>
-            <td>{{ unit.country }}</td>
-        </tr>
-        {% endfor %}
+        {% if units %}
+            {% for unit in units %}
+            <tr>
+                <td>{{ unit.serial_number }}</td>
+                <td>{{ unit.part_number }}</td>
+                <td>{{ unit.datecode }}</td>
+                <td>{{ unit.country }}</td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+            <td colspan="4">No units found.</td>
+            </tr>
+        {% endif %}
     </tbody>
 </table>
+
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Default mode is search mode
+        let isSearchMode = getCookie('mode');
+        console.log(getCookie('mode'));
+
+        // Set the toggle state based on the cookie value
+        var mode = getCookie('mode');
+        if (mode === 'add') {
+            document.getElementById('modeToggle').checked = true;
+        } else {
+            document.getElementById('modeToggle').checked = false;
+        }
+
+        
+        // Toggle switch functionality
+        $('#modeToggle').on('change', function() {
+            // isSearchMode = !isSearchMode;
+            updateActionButton();
+            updateDropdown();
+        });
+
+        // Update action button based on mode
+        function updateActionButton() {
+            if (document.getElementById('modeToggle').checked) {
+                $('#actionButton').text('Search').removeClass('btn-danger').addClass('btn-primary');
+                $('#ToggleSwitch').text('Search').removeAttr('style').attr('style', 'color: aliceblue;');
+            } else {
+                $('#actionButton').text('Add').removeClass('btn-danger').addClass('btn-danger');
+                $('#ToggleSwitch').text('Add').removeAttr('style').attr('style', 'color: deeppink;');
+            // } else {
+            //     $('#actionButton').text('Add').removeClass('btn-primary').addClass('btn-danger');
+             }
+        }
+
+        // Update dropdown based on mode
+        function updateDropdown() {
+            if (!isSearchMode && $('#partNumberDropdown').val() === 'any') {
+                $('#partNumberDropdown').val('100-000000000');
+            }
+        }
+
+        // Search box functionality
+        $('#searchBox').on('blur', function() {
+            const input = $(this).val();
+            if (input.includes('_')) {
+                const parts = input.split('_');
+                if (parts.length === 2) {
+                    const serialNumber = parts[0];
+                    const partNumber = parts[1];
+                    console.log(serialNumber, partNumber);
+                    $(this).val(serialNumber);
+                    $('#partNumberDropdown').val(partNumber);
+                }
+            } else {
+                // Reset dropdown to 'any' if the search box does not contain a part number
+                // $('#partNumberDropdown').val('any');
+                // Doing nothing for now.
+
+                $('#actionButton').focus();  }
+        });
+
+           // Trigger button click on Enter key press in the search box
+        $('#searchBox').on('keypress', function(event) {
+            if (event.which === 13) { // Enter key code is 13
+                event.preventDefault();
+                $('#actionButton').click();
+            }
+        });
+
+        // Form submit functionality byt cllicking on the button or 
+        $('#actionButton').on('click', function(event) {
+            console.log('Button clicked');
+        event.preventDefault(); // Prevent the default form submission behavior
+
+        // Retrieve the values from the input fields
+        const searchBoxValue = $('#searchBox').val();
+        const partNumberValue = $('#partNumberDropdown').val();
+        const toggleMode = getCookie('mode'); 
+        console.log('Button clicked2');
+        if (toggleMode === 'search') {
+            console.log('in search mode');
+            if (!searchBoxValue) {
+                alert('Please enter a value in the search box.');
+                return;
+            }
+
+            $.ajax({
+                url: '/search',
+                method: 'POST',
+                data: {
+                    searchBox: searchBoxValue,
+                    partNumber: partNumberValue
+                },
+                success: function(response) {
+                    // Handle the response
+                    console.log('Search Response:', response);
+                    // Check if the response is successful and contains the expected fields
+                    if (response.results && Array.isArray(response.results)) 
+                    {
+                        // Clear existing table rows
+                        $('#home_results_table tbody').empty();
+                        response.results.forEach(result => 
+                        {
+                            if (result.serial_number && result.part_number) 
+                            {
+                                // Append new rows to the table
+                                var row = '<tr>' +
+                                    '<td>' + result.serial_number + '</td>' +
+                                    '<td>' + result.part_number + '</td>' +
+                                    '<td>' + result.datecode + '</td>' +
+                                    '<td>' + result.country + '</td>' +
+                                    '</tr>';
+                                $('#home_results_table tbody').append(row);
+                            } else 
+                            {
+                                console.error('Missing expected fields in result:', result);
+                            }
+                        });
+                    } else {
+                        console.error('Invalid response:', response);
+                    }
+                }    
+            });
+            
+        } else if (toggleMode === 'add') {
+            console.log('in add mode');
+            if (!searchBoxValue) {
+                alert('Please enter a value in the search box.');
+                return;
+            }
+
+            $.ajax({
+                url: '/add',
+                method: 'POST',
+                data: {
+                    searchBox: searchBoxValue,
+                    partNumber: partNumberValue
+                },
+                success: function(response) {
+                    // Handle the response
+                    console.log('Add Response:', response);
+                    // Check if the response is successful
+                    if (response.success) {
+                        $('#searchBox').val('');
+                        $('#partNumberDropdown').val('Any');
+                    } else {
+                        console.error('Add operation failed:', response);
+                    }
+                }
+            });
+        }
+    });
+
+        // Initial setup
+        updateActionButton();
+    });
+
+    
+</script>
