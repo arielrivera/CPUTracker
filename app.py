@@ -1,4 +1,4 @@
-from flask import Flask, g, request, render_template, Response, jsonify, session, redirect, url_for, make_response
+from flask import Flask, g, request, render_template, Response, jsonify, session, redirect, url_for, make_response, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from flask_bootstrap import Bootstrap
@@ -38,9 +38,10 @@ def index():
 @app.route('/home')
 def home():
     db = get_db()
-    units = db.execute('SELECT * FROM UNITS').fetchall()
+    units = db.execute('SELECT * FROM UNITS ORDER BY date_added DESC LIMIT 10').fetchall()
+    parts = db.execute('SELECT part_number FROM PARTS WHERE enabled = 1').fetchall()
     db.close()
-    return render_template('home.html', units=units)
+    return render_template('home.html', units=units, parts=parts)
 
 
 @app.route('/logs')
@@ -69,13 +70,7 @@ def login():
             return resp
         return 'Invalid credentials'
     return render_template('login.html')
-    # return '''
-    #     <form method="post">
-    #         <p><input type=text name=username>
-    #         <p><input type=password name=password>
-    #         <p><input type=submit value=Login>
-    #     </form>
-    # '''
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -83,21 +78,25 @@ def register():
         username = request.form['username']
         password = request.form['password']
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        conn = get_db()
-        conn.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, hashed_password))
-        conn.commit()
-        conn.close()
-        # return redirect(url_for('login'))
-        return render_template('login.html')
+        try:
+            conn = get_db()
+            conn.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, hashed_password))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('login'))
+        except sqlite3.IntegrityError:
+            flash('Username already exists. Please choose a different one.')
+            return redirect(url_for('register'))
+        except sqlite3.Error as e:
+            flash(f'Database error: {e}')
+            return redirect(url_for('register'))
+        except Exception as e:
+            flash(f'An unexpected error occurred: {e}')
+            return redirect(url_for('register'))
+
     
     return render_template('register.html')
-    # return '''
-    #     <form method="post">
-    #         <p><input type=text name=username>
-    #         <p><input type=password name=password>
-    #         <p><input type=submit value=Register>
-    #     </form>
-    # '''
+
 
 @app.route('/logout')
 def logout():
@@ -118,12 +117,15 @@ def search():
 
     # Construct the SQL query
     if part_number.lower() == 'any':
-        query = "SELECT * FROM UNITS WHERE serial_number = ?"
+        query = "SELECT date_added, serial_number, part_number, datecode, country FROM UNITS WHERE serial_number LIKE ?"
         # print(query)
-        params = (search_box,)
+        params = (search_box + '%',)
     else:
-        query = "SELECT * FROM UNITS WHERE serial_number = ? AND part_number = ?"
-        params = (search_box, part_number)
+        query = "SELECT date_added, serial_number, part_number, datecode, country FROM UNITS WHERE serial_number LIKE ? AND part_number = ?"
+        params = (search_box + '%', part_number)
+
+    print(query)
+    print(params)
 
     # Execute the query and fetch the results
     cursor.execute(query, params)
@@ -136,14 +138,11 @@ def search():
     results = []
     for row in rows:
         results.append({
-            'id': row[0],
-            'date_added': row[1],
-            'date_last_modified': row[2],
+            'date_added': row[0],
             'serial_number': row[1],
             'part_number': row[2],
             'datecode': row[3],
-            'country': row[4],
-            'composite_snpn': row[5]
+            'country': row[4]
         })
 
     return jsonify(results=results)
@@ -156,10 +155,61 @@ def add():
     part_number = request.form.get('partNumber')
     # Implement your add logic here
     # For example, add the item to the database
-    success = True  # Replace with actual success status
-    return jsonify(success=success)
+    # Basic verification
+    if not search_box or not part_number:
+        return jsonify(success=False, message="Missing data"), 400
 
+    # Add the new unit to the database
+    conn = get_db()
+    cursor = conn.cursor()
 
+    try:
+        cursor.execute('INSERT INTO units (serial_number, part_number) VALUES (?, ?)', (search_box, part_number))
+        conn.commit()
+        success = True
+    except Exception as e:
+        conn.rollback()
+        success = False
+        message = str(e)
+    finally:
+        conn.close()
+
+    if success:
+        return jsonify(success=True, message="Unit added successfully")
+    else:
+        return jsonify(success=False, message=message)
+
+@app.route('/addpart', methods=['POST'])
+def add_part():
+    data = request.get_json()
+    part_number = data.get('part_number')
+
+    if not part_number:
+        return jsonify(success=False, message="Part number is required"), 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('INSERT INTO parts (part_number) VALUES (?)', (part_number,))
+        conn.commit()
+
+        # Fetch the updated list of parts
+        cursor.execute('SELECT part_number FROM parts')
+        parts = cursor.fetchall()
+        parts_list = [{'part_number': part['part_number']} for part in parts]
+
+        success = True
+    except Exception as e:
+        conn.rollback()
+        success = False
+        message = str(e)
+    finally:
+        conn.close()
+
+    if success:
+        return jsonify(success=True, parts=parts_list)
+    else:
+        return jsonify(success=False, message=message)
 
 app.jinja_env.add_extension('jinja2.ext.do')
 

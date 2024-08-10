@@ -9,22 +9,34 @@
     <script>
             
         
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+            console.log(document.cookie);
+        }
+
+        
         function getCookie(name) {
-            var value = "; " + document.cookie;
-            var parts = value.split("; " + name + "=");
-            if (parts.length == 2) {
-                return parts.pop().split(";").shift();
-            } else {
-                return "search"; // Default to "search" if the cookie is not found
+            const cname = name + "=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(cname) === 0) {
+                    console.log(c.substring(cname.length, c.length));
+                    return c.substring(cname.length, c.length);
+                }
             }
+            return "";
         }
-            function setModeCookie() {
-            var mode = document.getElementById('modeToggle').checked ? 'add' : 'search';
-            document.cookie = "mode=" + mode + "; path=/";
-            console.log('mode set to '+mode)
-        }
-            
-            $(document).ready(function() {
+
+
+    $(document).ready(function() {
 
 
         // Handle tab clicks
@@ -83,6 +95,11 @@
 
         $('#home').addClass('show active');
     });
+
+
+ 
+
+
     </script>
        <style>
         /*Styles for home topbar section*/
@@ -103,6 +120,17 @@
         }
         .topbar .form-row .col:last-child {
             margin-right: 0;
+        }
+
+        /* Extra styles for active/inactive buttons*/
+        .btn-group-toggle .btn.active {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .btn-group-toggle .btn {
+            transition: transform 0.1s, box-shadow 0.1s;
         }
     </style>
 </head>

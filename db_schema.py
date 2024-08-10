@@ -40,6 +40,16 @@ cursor.execute('''
     );
 ''')
 
+# Create the AUDIT table
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS PARTS (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        part_number VARCHAR(20) NOT NULL,
+        date_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+        enabled BOOLEAN DEFAULT TRUE
+    );
+''')
+
 # Commit the changes
 conn.commit()
 

@@ -1,24 +1,48 @@
-   <!-- Topbar Section -->
+
+  
+  
+  <!-- Topbar Section -->
    <div class="navbar navbar-dark bg-dark">
 
     <form class="col-12">
         
         <div class="form-row">
           <div class="col-2">
-            <div class="custom-control custom-switch form-control-lg">
-                <input type="checkbox" class="custom-control-input form-control-lg" id="modeToggle" onchange="setModeCookie()">
-                <label id="ToggleSwitch" class="custom-control-label" for="modeToggle" style="color: aliceblue;" >Toggle Mode</label>
+
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-lg btn-secondary active" for="searchMode">
+                    <input type="radio" name="options" id="searchMode" autocomplete="off" checked onclick="setMode('search')"> Search
+                </label>
+                <label class="btn btn-lg btn-secondary" for="addMode">
+                    <input type="radio" name="options" id="addMode" autocomplete="off" onclick="setMode('add')"> Add
+                </label>
             </div>
+
           </div>
           <div class="col-5">
             <input type="text" class="form-control form-control-lg" id="searchBox" placeholder="Enter serial #">
           </div>  
           <div class="col col-3">
-            <select class="form-control form-control-lg" id="partNumberDropdown">
+
+
+            <select class="form-control form-control-lg" id="partNumberDropdown" onchange="handlePartNumberChange()">
                 <option value="any">Any</option>
-                <!-- Add more options dynamically -->
+
+                {% if parts %}
+                {% for part in parts %}
+                <option value="{{ part.part_number }}">{{ part.part_number }}</option>
+                {% endfor %}
+                {% endif %}
         
+                     
+                <option disabled>──────────</option>
+
+
+                <option  id="id_add_part_number" value="add_part_number">Add new part number</option>
+
             </select>
+
+
           </div>
           <div class="col-2">
             <button class="btn-primary form-control form-control-lg" id="actionButton">Search</button>
@@ -26,10 +50,16 @@
         </div>
  
     </form>
-    
+
 
  </div>
+
+
 <div class="container">
+
+    <div id="alert-message" class="alert alert-danger" role="alert" style="display: none;">
+        <!-- Messages area  -->
+    </div>
 
 <table id='home_results_table' class="table table-striped">
     <thead>
@@ -60,40 +90,83 @@
 
 </div>
 
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="addPartModal" tabindex="-1" role="dialog" aria-labelledby="addPartModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addPartModalLabel">Add New Part Number</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="text" class="form-control" id="newPartNumber" placeholder="Enter new part number">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="addPartButton">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
-    $(document).ready(function() {
-        // Default mode is search mode
-        let isSearchMode = getCookie('mode');
-        console.log(getCookie('mode'));
 
-        // Set the toggle state based on the cookie value
-        var mode = getCookie('mode');
-        if (mode === 'add') {
-            document.getElementById('modeToggle').checked = true;
-        } else {
-            document.getElementById('modeToggle').checked = false;
-        }
 
-        
-        // Toggle switch functionality
-        $('#modeToggle').on('change', function() {
-            // isSearchMode = !isSearchMode;
-            updateActionButton();
-            updateDropdown();
-        });
 
-        // Update action button based on mode
-        function updateActionButton() {
-            if (document.getElementById('modeToggle').checked) {
-                $('#actionButton').text('Search').removeClass('btn-danger').addClass('btn-primary');
-                $('#ToggleSwitch').text('Search').removeAttr('style').attr('style', 'color: aliceblue;');
+function setMode(mode) {
+            const searchBox = document.getElementById('searchMode');
+            const addBox = document.getElementById('addMode');
+            // const partNumberDropdown = document.getElementById('partNumberDropdown');
+            const actionButton = document.getElementById('actionButton');
+            const searchLabel = document.querySelector('label[for="searchMode"]');
+            const addLabel = document.querySelector('label[for="addMode"]');
+
+            if (mode === 'search') {
+                searchLabel.classList.remove('btn-secondary');
+                searchLabel.classList.add('active', 'btn-primary');
+                
+                addLabel.classList.remove('active', 'btn-primary', 'btn-danger');
+                addLabel.classList.add('btn-secondary');
+
+
+                actionButton.textContent = 'Search';
+                actionButton.classList.remove('btn-danger');
+                actionButton.classList.add('btn-primary');
             } else {
-                $('#actionButton').text('Add').removeClass('btn-danger').addClass('btn-danger');
-                $('#ToggleSwitch').text('Add').removeAttr('style').attr('style', 'color: deeppink;');
-            // } else {
-            //     $('#actionButton').text('Add').removeClass('btn-primary').addClass('btn-danger');
-             }
+                searchLabel.classList.remove('active', 'btn-primary');
+                searchLabel.classList.add('btn-secondary');
+
+                addLabel.classList.remove('btn-secondary');
+                addLabel.classList.add('active', 'btn-danger');
+
+
+                actionButton.textContent = 'Add';
+                actionButton.classList.remove('btn-primary');
+                actionButton.classList.add('btn-danger');
+            }
+
+            // Save the selected mode to a cookie
+            setCookie('mode', mode, 7); // Cookie expires in 7 days
         }
+    
+        // message area handling
+    function showAlert(message) {
+        const alertDiv = $('#alert-message');
+        alertDiv.text(message);
+        alertDiv.show();
+
+        setTimeout(() => {
+            alertDiv.hide();
+        }, 5000);
+    }
+    // Hide the alert when the user performs other actions
+    $(document).on('click', function() {
+        $('#alert-message').hide();
+    }); // End message area handling
+
+    $(document).ready(function() {
 
         // Update dropdown based on mode
         function updateDropdown() {
@@ -105,118 +178,234 @@
         // Search box functionality
         $('#searchBox').on('blur', function() {
             const input = $(this).val();
+            console.log(input)
             if (input.includes('_')) {
                 const parts = input.split('_');
+                console.log(parts)
                 if (parts.length === 2) {
-                    const serialNumber = parts[0];
-                    const partNumber = parts[1];
-                    console.log(serialNumber, partNumber);
-                    $(this).val(serialNumber);
-                    $('#partNumberDropdown').val(partNumber);
+                    deconstructSearchString(parts)
+                    // const serialNumber = parts[1];
+                    // const partNumber = parts[0];
+                    // console.log(serialNumber, partNumber);
+                    // $(this).val(serialNumber);
+                    // $('#partNumberDropdown').val(partNumber);
                 }
             } else {
                 // Reset dropdown to 'any' if the search box does not contain a part number
                 // $('#partNumberDropdown').val('any');
                 // Doing nothing for now.
 
-                $('#actionButton').focus();  }
+                $('#actionButton').focus();  
+            }
+
         });
 
+        // Function to deconstruct the search string "100-000000334_9KC4399M10022"
+        function deconstructSearchString(parts) {
+
+            const serialNumber = parts[1];
+            const partNumber = parts[0];
+            console.log(serialNumber, partNumber);
+            $('#searchBox').val(serialNumber);
+
+            // Check if the part number exists in the dropdown
+            const dropdown = $('#partNumberDropdown');
+            const optionExists = dropdown.find(`option[value='${partNumber}']`).length > 0;
+
+            if (optionExists) {
+                dropdown.val(partNumber);
+            } else {
+                dropdown.val('any');
+            }
+            $('#actionButton').click();
+        }
+
+        
            // Trigger button click on Enter key press in the search box
         $('#searchBox').on('keypress', function(event) {
             if (event.which === 13) { // Enter key code is 13
                 event.preventDefault();
-                $('#actionButton').click();
+                // $('#actionButton').click();
+                $('#searchBox').blur();
             }
         });
 
         // Form submit functionality byt cllicking on the button or 
         $('#actionButton').on('click', function(event) {
             console.log('Button clicked');
-        event.preventDefault(); // Prevent the default form submission behavior
+            event.preventDefault(); // Prevent the default form submission behavior
 
-        // Retrieve the values from the input fields
-        const searchBoxValue = $('#searchBox').val();
-        const partNumberValue = $('#partNumberDropdown').val();
-        const toggleMode = getCookie('mode'); 
-        console.log('Button clicked2');
-        if (toggleMode === 'search') {
-            console.log('in search mode');
-            if (!searchBoxValue) {
-                alert('Please enter a value in the search box.');
-                return;
-            }
-
-            $.ajax({
-                url: '/search',
-                method: 'POST',
-                data: {
-                    searchBox: searchBoxValue,
-                    partNumber: partNumberValue
-                },
-                success: function(response) {
-                    // Handle the response
-                    console.log('Search Response:', response);
-                    // Check if the response is successful and contains the expected fields
-                    if (response.results && Array.isArray(response.results)) 
-                    {
-                        // Clear existing table rows
-                        $('#home_results_table tbody').empty();
-                        response.results.forEach(result => 
-                        {
-                            if (result.serial_number && result.part_number) 
-                            {
-                                // Append new rows to the table
-                                var row = '<tr>' +
-                                    '<td>' + result.serial_number + '</td>' +
-                                    '<td>' + result.part_number + '</td>' +
-                                    '<td>' + result.datecode + '</td>' +
-                                    '<td>' + result.country + '</td>' +
-                                    '</tr>';
-                                $('#home_results_table tbody').append(row);
-                            } else 
-                            {
-                                console.error('Missing expected fields in result:', result);
-                            }
-                        });
-                    } else {
-                        console.error('Invalid response:', response);
-                    }
-                }    
-            });
-            
-        } else if (toggleMode === 'add') {
-            console.log('in add mode');
-            if (!searchBoxValue) {
-                alert('Please enter a value in the search box.');
-                return;
-            }
-
-            $.ajax({
-                url: '/add',
-                method: 'POST',
-                data: {
-                    searchBox: searchBoxValue,
-                    partNumber: partNumberValue
-                },
-                success: function(response) {
-                    // Handle the response
-                    console.log('Add Response:', response);
-                    // Check if the response is successful
-                    if (response.success) {
-                        $('#searchBox').val('');
-                        $('#partNumberDropdown').val('Any');
-                    } else {
-                        console.error('Add operation failed:', response);
-                    }
+            // Retrieve the values from the input fields
+            const searchBoxValue = $('#searchBox').val();
+            const partNumberValue = $('#partNumberDropdown').val();
+            const toggleMode = getCookie('mode'); 
+            console.log('Button clicked2');
+            if (toggleMode === 'search') {
+                console.log('in search mode');
+                if (!searchBoxValue) {
+                    alert('Please enter a value in the search box.');
+                    return;
                 }
-            });
-        }
+
+                $.ajax({
+                    url: '/search',
+                    method: 'POST',
+                    data: {
+                        searchBox: searchBoxValue,
+                        partNumber: partNumberValue
+                    },
+                    success: function(response) {
+                        // Handle the response
+                        console.log('Search Response:', response);
+                        // Check if the response is successful and contains the expected fields
+                        if (response.results && Array.isArray(response.results)) 
+                        {
+                            // Clear existing table rows
+                            $('#home_results_table tbody').empty();
+                            response.results.forEach(result => 
+                            {
+                                if (result.serial_number && result.part_number) 
+                                {
+                                    // Append new rows to the table
+                                    var row = '<tr>' +
+                                        '<td>' + result.serial_number + '</td>' +
+                                        '<td>' + result.part_number + '</td>' +
+                                        '<td>' + result.datecode + '</td>' +
+                                        '<td>' + result.country + '</td>' +
+                                        '</tr>';
+                                    $('#home_results_table tbody').append(row);
+                                } else 
+                                {
+                                    console.error('Missing expected fields in result:', result);
+                                }
+                            });
+                        } else {
+                            console.error('Invalid response:', response);
+                        }
+                    }    
+                });
+                
+            } else if (toggleMode === 'add') {
+                console.log('in add mode');
+                if (!searchBoxValue) {
+                    alert('Please enter a value in the search box.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/add',
+                    method: 'POST',
+                    data: {
+                        searchBox: searchBoxValue,
+                        partNumber: partNumberValue
+                    },
+                    success: function(response) {
+                        // Handle the response
+                        console.log('Add Response:', response);
+                        // Check if the response is successful
+                        if (response.success) {
+                            $('#searchBox').val('');
+                            $('#partNumberDropdown').val('Any');
+                            $('#searchBox').focus();
+                        } else {
+                            showAlert(response.message)
+                            console.error('Add operation failed:', response.message );
+                            $('#searchBox').focus();
+                        }
+                    }
+                });
+            }
     });
 
         // Initial setup
-        updateActionButton();
-    });
-
+        // updateActionButton();
+        const savedMode = getCookie('mode');
+        if (savedMode) {
+            setMode(savedMode);
+            const modeRadio = document.getElementById(savedMode + 'Mode');
+            if (modeRadio) {
+                modeRadio.checked = true;
+            }
+        } else {
+            setMode('search');
+        }
     
+    
+   
+    
+    });  
+// Document ready ends
+   
+ 
+    /// Taking care of the add new part number option
+    function handlePartNumberChange() {
+    // Get the selected value from the dropdown
+        const selectedPartNumber = document.getElementById('partNumberDropdown').value;
+
+        // Check if the selected value is "add_part_number"
+        if (selectedPartNumber === 'add_part_number') {
+            // Open the modal
+            $('#addPartModal').modal('show');
+        } else {
+            // Handle other selected part numbers (if needed)
+            console.log('Selected part number:', selectedPartNumber);
+        }
+    }
+    
+        // Handle the Add button click in the modal
+        document.getElementById('addPartButton').addEventListener('click', function() {
+            var newPartNumber = document.getElementById('newPartNumber').value;
+    
+            if (newPartNumber) {
+                // Make AJAX call to add the new part number
+                fetch('/addpart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ part_number: newPartNumber })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the dropdown with the new list of parts
+                        var dropdown = document.getElementById('partNumberDropdown');
+                        dropdown.innerHTML = '<option value="any">Any</option>';
+    
+                        data.parts.forEach(function(part) {
+                            var option = document.createElement('option');
+                            option.value = part.part_number;
+                            option.textContent = part.part_number;
+                            dropdown.appendChild(option);
+                        });
+    
+                        // Add the separator and "Add new part number" option
+                        var separator = document.createElement('option');
+                        separator.disabled = true;
+                        separator.textContent = '──────────';
+                        dropdown.appendChild(separator);
+    
+                        var addOption = document.createElement('option');
+                        addOption.id = 'id_add_part_number';
+                        addOption.value = 'add_part_number';
+                        addOption.textContent = 'Add new part number';
+                        dropdown.appendChild(addOption);
+    
+                        // Close the modal
+                        $('#addPartModal').modal('hide');
+                    } else {
+                        alert('Failed to add part number: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while adding the part number.');
+                });
+            } else {
+                alert('Please enter a part number.');
+            }
+        });
+    
+    
+
 </script>

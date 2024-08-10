@@ -22,12 +22,7 @@ Ok, I'm ready to focus on the Main , or home, section of the page.
 
 
 
-                    if (isSearchMode) {
-                $('#actionButton').text('Search').removeClass('btn-danger').addClass('btn-primary');
-                $('#ToggleSwitch').text('Search Mode').removeAttr('style').add(Attr('style', 'color: crimson;'));
-            } else {
-                $('#actionButton').text('Add').removeClass('btn-danger').addClass('btn-primary');
-                $('#ToggleSwitch').text('Search').removeAttr('style').add(Attr('style', 'color: aliceblue;'));
-            } else {
-                $('#actionButton').text('Add').removeClass('btn-primary').addClass('btn-danger');
-            }
+        Lets create a function for when the string in the searchbox detects an underscore on the blur event as follows: 
+        Lets call the function deconstructSearchString()
+        If the underscore is detected then we call this new function that will attempt to deconstruct the string and leave the serial number, which is the part to the right of the underscore, in the search box and try to identify the part number, which is to the left of the underscore,  and select it in the dropdown. 
+        If the part number is not found in the dropwdown then the dropdown should be set to it's default value "Any" 
