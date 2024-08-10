@@ -178,27 +178,16 @@ function setMode(mode) {
         // Search box functionality
         $('#searchBox').on('blur', function() {
             const input = $(this).val();
-            console.log(input)
+            console.log('in blur event with input : '+input)
             if (input.includes('_')) {
                 const parts = input.split('_');
                 console.log(parts)
                 if (parts.length === 2) {
                     deconstructSearchString(parts)
-                    // const serialNumber = parts[1];
-                    // const partNumber = parts[0];
-                    // console.log(serialNumber, partNumber);
-                    // $(this).val(serialNumber);
-                    // $('#partNumberDropdown').val(partNumber);
                 }
-            } else {
-                // Reset dropdown to 'any' if the search box does not contain a part number
-                // $('#partNumberDropdown').val('any');
-                // Doing nothing for now.
+            } 
 
-                $('#actionButton').focus();  
-            }
-
-        });
+        }); 
 
         // Function to deconstruct the search string "100-000000334_9KC4399M10022"
         function deconstructSearchString(parts) {
@@ -217,7 +206,7 @@ function setMode(mode) {
             } else {
                 dropdown.val('any');
             }
-            $('#actionButton').click();
+            // $('#actionButton').click();
         }
 
         
@@ -225,21 +214,30 @@ function setMode(mode) {
         $('#searchBox').on('keypress', function(event) {
             if (event.which === 13) { // Enter key code is 13
                 event.preventDefault();
-                // $('#actionButton').click();
-                $('#searchBox').blur();
+                $('#actionButton').click();
+                // $('#searchBox').blur();
             }
         });
 
-        // Form submit functionality byt cllicking on the button or 
+        // Form submit functionality byt cllicking on the button
         $('#actionButton').on('click', function(event) {
             console.log('Button clicked');
             event.preventDefault(); // Prevent the default form submission behavior
-
+            
             // Retrieve the values from the input fields
             const searchBoxValue = $('#searchBox').val();
             const partNumberValue = $('#partNumberDropdown').val();
             const toggleMode = getCookie('mode'); 
-            console.log('Button clicked2');
+
+            if (searchBoxValue.includes('_')) {
+                const parts = searchBoxValue.split('_');
+                console.log(parts)
+                if (parts.length === 2) {
+                    deconstructSearchString(parts)
+                }
+            } 
+
+
             if (toggleMode === 'search') {
                 console.log('in search mode');
                 if (!searchBoxValue) {
@@ -304,11 +302,12 @@ function setMode(mode) {
                         console.log('Add Response:', response);
                         // Check if the response is successful
                         if (response.success) {
+                            showAlert(response.message);
                             $('#searchBox').val('');
                             $('#partNumberDropdown').val('Any');
                             $('#searchBox').focus();
                         } else {
-                            showAlert(response.message)
+                            showAlert(response.message);
                             console.error('Add operation failed:', response.message );
                             $('#searchBox').focus();
                         }
