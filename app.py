@@ -43,6 +43,25 @@ def home():
     db.close()
     return render_template('home.html', units=units, parts=parts)
 
+@app.route('/get_records', methods=['GET'])
+def get_records():
+    records_per_page = request.args.get('recordsPerPage', '10')
+    db = get_db()
+    
+    if records_per_page == 'all':
+        query = 'SELECT date_added, serial_number, part_number, datecode, country FROM UNITS ORDER BY date_added DESC'
+        records = db.execute(query).fetchall()
+    else:
+        records_per_page = int(records_per_page)
+        query = 'SELECT date_added, serial_number, part_number, datecode, country FROM UNITS ORDER BY date_added DESC LIMIT ?'
+        records = db.execute(query, (records_per_page,)).fetchall()
+    
+    db.close()
+    
+    # Convert records to a list of dictionaries
+    records_list = [dict(record) for record in records]
+    
+    return jsonify({'records': records_list})
 
 @app.route('/logs')
 def logs():

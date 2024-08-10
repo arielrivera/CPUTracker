@@ -55,38 +55,52 @@
  </div>
 
 
-<div class="container">
+<div class="container ">
 
     <div id="alert-message" class="alert alert-danger" role="alert" style="display: none;">
         <!-- Messages area  -->
     </div>
 
-<table id='home_results_table' class="table table-striped">
-    <thead>
-        <tr>
-            <th>Serial Number</th>
-            <th>Part Number</th>
-            <th>Datecode</th>
-            <th>Country</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% if units %}
-            {% for unit in units %}
+    <div class="row">
+        <div class="col-sm-6">
+            <label for="recordsPerPage"> <h6><em>Show</em></h6></label>
+            <select id="recordsPerPage" class="form-control form-control-sm d-inline-block w-auto">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="all">All</option>
+            </select>
+            <label for="recordsPerPage"><h6><em>records</em></h6></label>
+        </div>
+    </div>
+
+    <table id='home_results_table' class="table table-striped">
+        <thead>
             <tr>
-                <td>{{ unit.serial_number }}</td>
-                <td>{{ unit.part_number }}</td>
-                <td>{{ unit.datecode }}</td>
-                <td>{{ unit.country }}</td>
+                <th>Serial Number</th>
+                <th>Part Number</th>
+                <th>Datecode</th>
+                <th>Country</th>
             </tr>
-            {% endfor %}
-        {% else %}
-            <tr>
-            <td colspan="4">No units found.</td>
-            </tr>
-        {% endif %}
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            {% if units %}
+                {% for unit in units %}
+                <tr>
+                    <td>{{ unit.serial_number }}</td>
+                    <td>{{ unit.part_number }}</td>
+                    <td>{{ unit.datecode }}</td>
+                    <td>{{ unit.country }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                <td colspan="4">No units found.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
 
 </div>
 
@@ -167,6 +181,43 @@ function setMode(mode) {
     }); // End message area handling
 
     $(document).ready(function() {
+
+
+        $('#recordsPerPage').on('change', function() {
+                const selectedValue = $(this).val();
+                updateTable(selectedValue);
+            });
+
+            function updateTable(recordsPerPage) {
+                $.ajax({
+                    url: '/get_records',
+                    method: 'GET',
+                    data: { recordsPerPage: recordsPerPage },
+                    success: function(data) {
+                        // Clear the table
+                        $('#home_results_table').empty();
+
+                        // Populate the table with the fetched data
+                        data.records.forEach(record => {
+                            $('#home_results_table').append(`
+                                <tr>
+                                    <td>${record.date_added}</td>
+                                    <td>${record.serial_number}</td>
+                                    <td>${record.part_number}</td>
+                                    <td>${record.datecode}</td>
+                                    <td>${record.country}</td>
+                                    <!-- Add more fields as necessary -->
+                                </tr>
+                            `);
+                        });
+                    }
+                });
+            }
+
+            // Set default value to 10 and load initial data
+            $('#recordsPerPage').val('5');
+            updateTable('5');
+
 
         // Update dropdown based on mode
         function updateDropdown() {
