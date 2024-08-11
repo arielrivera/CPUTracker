@@ -49,11 +49,11 @@ def get_records():
     db = get_db()
     
     if records_per_page == 'all':
-        query = 'SELECT date_added, serial_number, part_number, datecode, country FROM UNITS ORDER BY date_added DESC'
+        query = 'SELECT id, date_added, serial_number, part_number, datecode, country,test_result FROM UNITS ORDER BY date_added DESC'
         records = db.execute(query).fetchall()
     else:
         records_per_page = int(records_per_page)
-        query = 'SELECT date_added, serial_number, part_number, datecode, country FROM UNITS ORDER BY date_added DESC LIMIT ?'
+        query = 'SELECT id, date_added, serial_number, part_number, datecode, country,test_result FROM UNITS ORDER BY date_added DESC LIMIT ?'
         records = db.execute(query, (records_per_page,)).fetchall()
     
     db.close()
@@ -136,11 +136,11 @@ def search():
 
     # Construct the SQL query
     if part_number.lower() == 'any':
-        query = "SELECT date_added, serial_number, part_number, datecode, country FROM UNITS WHERE serial_number LIKE ?"
+        query = "SELECT id, date_added, serial_number, part_number, datecode, country FROM UNITS WHERE serial_number LIKE ?"
         # print(query)
         params = (search_box + '%',)
     else:
-        query = "SELECT date_added, serial_number, part_number, datecode, country FROM UNITS WHERE serial_number LIKE ? AND part_number = ?"
+        query = "SELECT id, date_added, serial_number, part_number, datecode, country FROM UNITS WHERE serial_number LIKE ? AND part_number = ?"
         params = (search_box + '%', part_number)
 
     print(query)
@@ -157,11 +157,12 @@ def search():
     results = []
     for row in rows:
         results.append({
-            'date_added': row[0],
-            'serial_number': row[1],
-            'part_number': row[2],
-            'datecode': row[3],
-            'country': row[4]
+            'id': row[0],
+            'date_added': row[1],
+            'serial_number': row[2],
+            'part_number': row[3],
+            'datecode': row[4],
+            'country': row[5]
         })
 
     return jsonify(results=results)
@@ -229,6 +230,44 @@ def add_part():
         return jsonify(success=True, parts=parts_list)
     else:
         return jsonify(success=False, message=message)
+
+
+@app.route('/get_datecode_suggestions', methods=['GET'])
+def get_datecode_suggestions():
+    query = request.args.get('query', '')
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT datecode FROM UNITS WHERE datecode LIKE ?', (f'%{query}%',))
+    suggestions = [row['datecode'] for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(suggestions)
+
+@app.route('/update_record', methods=['POST'])
+def update_record():
+    data = request.form
+    record_id = data['record_id']
+    serial_number = data['serial_number']
+    part_number = data['part_number']
+    datecode = data['datecode']
+    country = data['country']
+    test_result = data['test_result']
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            UPDATE UNITS
+            SET serial_number =?, part_number = ?, datecode = ?, country = ?, test_result = ?
+            WHERE id = ?
+        ''', (serial_number, part_number, datecode, country, test_result, record_id))
+        conn.commit()
+        conn.close()
+        return jsonify(success=True)
+    except sqlite3.IntegrityError as e:
+        conn.close()
+        return jsonify(success=False, error=str(e))
+
+
 
 app.jinja_env.add_extension('jinja2.ext.do')
 

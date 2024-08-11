@@ -46,3 +46,30 @@ Ok, I'm ready to focus on the Main , or home, section of the page.
 
         -
                          
+
+
+
+        I need to implement pagination in home.html  search results table.
+        - The table should show a max of 100 rows per page, and the user should be able to navigate through the pages with a pagination control at the bottom of the table.
+        - The table should show the total number of rows found in the search query, and the number of pages.
+        - The table should show the current page number and the total number of pages.
+        
+
+      
+         Lets now focus on adding functionality to the search results page in home.html. 
+        1- I want to be able to edit the fields serial number, part number, datecode,country and result  in the search results table. 
+        If I double click on any of these 5 I should get a modal with a form to edit these 5 field at teh same time.
+            --Serial number should be an input box to type manually , it should only accept alphanumeric characters.
+            --Part number shuld be the exact same dropdown as in the search form. 
+            --datecode should be an input box to type manually but implement something where as the user types it suggests other datecodes in the database that match the string typed so far, based in the distinct datecode field in the units table. 
+            --Country should be a dropdown with these countries: Malaysia, China, USA.
+            --Result should be a dropdown with these options: Pass (NFF), Fail (VF), Scrap (VM/PPS), Unknown.
+        2- There should be a button to save the changes in the modal form, and a button to cancel the changes.
+            -- When the save button is clicked we need to show a spinner while the changes are being saved to the database, and then show a message that the changes were saved successfully if so.
+            -- If the changes were not saved successfully we need to show a message that the changes were not saved and why. For example, the serial number field has unique constraint so we should catch any failures like that and warn the user if so happens or any other errors.
+            -- When the cancel button is clicked we need to close the modal and not save any changes but warn the user, if there are unsaved changes, that the changes were not saved.
+            -- When the modal is closed we need to warn the user if there are unsaved changes that the changes were not saved.
+        3- There should be a button "Show test logs" that when clicked shows a separate modal with a table of the test logs telated to the LOGS table but will define this later, we'll come back to this later. 
+            The table should show the html table taht we'll define later.  
+            The table should have a button to close the modal.
+            

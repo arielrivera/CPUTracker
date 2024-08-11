@@ -78,20 +78,24 @@
     <table id='home_results_table' class="table table-striped">
         <thead>
             <tr>
-                <th>Serial Number</th>
-                <th>Part Number</th>
-                <th>Datecode</th>
-                <th>Country</th>
+                <th data-column="date_added">Date</th>
+                <th data-column="serial_number">Serial Number</th>
+                <th data-column="part_number">Part Number</th>
+                <th data-column="datecode">Datecode</th>
+                <th data-column="country">Country</th>
+                <th data-column="test_result">Result</th>
             </tr>
         </thead>
         <tbody>
             {% if units %}
                 {% for unit in units %}
-                <tr>
+                <tr record_id="{{ unit.id }}">
+                    <td>{{ unit.date_added }}</td>
                     <td>{{ unit.serial_number }}</td>
                     <td>{{ unit.part_number }}</td>
                     <td>{{ unit.datecode }}</td>
                     <td>{{ unit.country }}</td>
+                    <td>{{ unit.test_result }}</td>
                 </tr>
                 {% endfor %}
             {% else %}
@@ -104,7 +108,7 @@
 
 </div>
 
-<!-- Bootstrap Modal -->
+<!-- Bootstrap Modal to add new part number-->
 <div class="modal fade" id="addPartModal" tabindex="-1" role="dialog" aria-labelledby="addPartModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -124,6 +128,70 @@
       </div>
     </div>
   </div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit Record</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm">
+            <input type="hidden" id="hidden_record_id" name="hidden_record_id">
+            <div class="form-group">
+              <label for="serialNumber">Serial Number</label>
+              <input type="text" class="form-control" id="serialNumber" pattern="[a-zA-Z0-9]+" required>
+            </div>
+            <div class="form-group">
+                <label for="partNumber">Part Number</label>
+                <input type="text" class="form-control" id="partNumber" required>
+              </div>
+            <div class="form-group">
+              <label for="datecode">Datecode</label>
+              <input type="text" class="form-control" id="datecode" list="datecodeSuggestions" required>
+              <datalist id="datecodeSuggestions">
+                <!-- Suggestions will be populated dynamically -->
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label for="country">Country</label>
+              <select class="form-control" id="country">
+                <option value="Malaysia">Malaysia</option>
+                <option value="China">China</option>
+                <option value="USA">USA</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="testResult">Test Result</label>
+              <select class="form-control" id="testResult">
+                <option value="NFF">Pass (NFF)</option>
+                <option value="VF">Fail (VF)</option>
+                <option value="VM/PPS">Scrap (VM/PPS)</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+          </form>
+            <div id="editAlert" class="alert alert-dismissible fade show" role="alert" style="display: none;">
+                <span id="editAlertMessage"></span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveChangesButton" disabled>Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 
 <script>
 
@@ -166,8 +234,13 @@ function setMode(mode) {
         }
     
         // message area handling
-    function showAlert(message) {
+    function showHomeAlert(attitude, message) {
         const alertDiv = $('#alert-message');
+        if (attitude === 1) {
+            alertDiv.removeClass('alert-danger').addClass('alert-success');
+        } else {
+            alertDiv.removeClass('alert-success').addClass('alert-danger');
+        }
         alertDiv.text(message);
         alertDiv.show();
 
@@ -181,7 +254,38 @@ function setMode(mode) {
     }); // End message area handling
 
     $(document).ready(function() {
+        
+        // Function to sort table
+        function sortTable(column, order) {
+            const rows = $('#home_results_table tbody tr').get();
 
+            rows.sort(function(a, b) {
+                const A = $(a).children('td').eq(column).text().toUpperCase();
+                const B = $(b).children('td').eq(column).text().toUpperCase();
+
+                if (A < B) {
+                    return order === 'asc' ? -1 : 1;
+                }
+                if (A > B) {
+                    return order === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+
+            $.each(rows, function(index, row) {
+                $('#home_results_table').children('tbody').append(row);
+            });
+        }
+
+        // Add click event to table headers - For sorting the table too
+        $('#home_results_table th').click(function() {
+            const column = $(this).index();
+            const order = $(this).data('order') === 'asc' ? 'desc' : 'asc';
+            $(this).data('order', order);
+
+            sortTable(column, order);
+        });
+        // Sorting table related functions end
 
         $('#recordsPerPage').on('change', function() {
                 const selectedValue = $(this).val();
@@ -189,24 +293,25 @@ function setMode(mode) {
             });
 
             function updateTable(recordsPerPage) {
+                setCookie('recordsPerPage', recordsPerPage, 30); // Store preference in a cookie for 30 days
                 $.ajax({
                     url: '/get_records',
                     method: 'GET',
                     data: { recordsPerPage: recordsPerPage },
                     success: function(data) {
                         // Clear the table
-                        $('#home_results_table').empty();
+                        $('#home_results_table tbody').empty();
 
                         // Populate the table with the fetched data
                         data.records.forEach(record => {
-                            $('#home_results_table').append(`
-                                <tr>
+                            $('#home_results_table tbody').append(`
+                                <tr record_id="${record.id}" class="${getRowClass(record.test_result)}">
                                     <td>${record.date_added}</td>
                                     <td>${record.serial_number}</td>
                                     <td>${record.part_number}</td>
                                     <td>${record.datecode}</td>
                                     <td>${record.country}</td>
-                                    <!-- Add more fields as necessary -->
+                                    <td>${record.test_result}</td>
                                 </tr>
                             `);
                         });
@@ -214,10 +319,19 @@ function setMode(mode) {
                 });
             }
 
-            // Set default value to 10 and load initial data
-            $('#recordsPerPage').val('5');
-            updateTable('5');
+            // // Set default value to 10 and load initial data
+            // $('#recordsPerPage').val('5');
+            // updateTable('5');
+        // Get the recordsPerPage from the cookie
+        const recordsPerPage = getCookie('recordsPerPage') || 10; // Default to 10 if no cookie is found
+        $('#recordsPerPage').val(recordsPerPage); // Set the dropdown to the stored value
+        updateTable(recordsPerPage); // Initial table update
 
+        // Event listener for records per page change
+        $('#recordsPerPage').on('change', function() {
+            const selectedValue = $(this).val();
+            updateTable(selectedValue);
+        });
 
         // Update dropdown based on mode
         function updateDropdown() {
@@ -276,15 +390,17 @@ function setMode(mode) {
             event.preventDefault(); // Prevent the default form submission behavior
             
             // Retrieve the values from the input fields
-            const searchBoxValue = $('#searchBox').val();
-            const partNumberValue = $('#partNumberDropdown').val();
+            let searchBoxValue = $('#searchBox').val();
+            let partNumberValue = $('#partNumberDropdown').val();
             const toggleMode = getCookie('mode'); 
 
             if (searchBoxValue.includes('_')) {
                 const parts = searchBoxValue.split('_');
                 console.log(parts)
                 if (parts.length === 2) {
-                    deconstructSearchString(parts)
+                    deconstructSearchString(parts);
+                    searchBoxValue = $('#searchBox').val();
+                    partNumberValue = $('#partNumberDropdown').val();
                 }
             } 
 
@@ -316,11 +432,12 @@ function setMode(mode) {
                                 if (result.serial_number && result.part_number) 
                                 {
                                     // Append new rows to the table
-                                    var row = '<tr>' +
+                                    var row = '<tr record_id="' + result.id + '" class="' + getRowClass(result.test_result) + '">' +
                                         '<td>' + result.serial_number + '</td>' +
                                         '<td>' + result.part_number + '</td>' +
                                         '<td>' + result.datecode + '</td>' +
                                         '<td>' + result.country + '</td>' +
+                                        '<td>' + result.test_result + '</td>' +
                                         '</tr>';
                                     $('#home_results_table tbody').append(row);
                                 } else 
@@ -353,12 +470,16 @@ function setMode(mode) {
                         console.log('Add Response:', response);
                         // Check if the response is successful
                         if (response.success) {
-                            showAlert(response.message);
+                            const recordsPerPage = getCookie('recordsPerPage') || 10; // Default to 10 if no cookie is found
+                            $('#recordsPerPage').val(recordsPerPage); // Set the dropdown to the stored value
+                            updateTable(recordsPerPage); // Initial table update
+
+                            showHomeAlert(1,response.message);
                             $('#searchBox').val('');
                             $('#partNumberDropdown').val('Any');
                             $('#searchBox').focus();
                         } else {
-                            showAlert(response.message);
+                            showHomeAlert(0,response.message);
                             console.error('Add operation failed:', response.message );
                             $('#searchBox').focus();
                         }
@@ -380,8 +501,111 @@ function setMode(mode) {
             setMode('search');
         }
     
+       // RECORD EDIT MODAL STARTS
+        // Fetch datecode suggestions
+        function fetchDatecodeSuggestions(query) {
+            return $.ajax({
+                url: '/get_datecode_suggestions',
+                method: 'GET',
+                data: { query: query }
+            });
+        }
     
+        //Handle double-click on table rows
+        $('#home_results_table tbody').on('dblclick', 'tr', function() {
+            const recordId = $(this).attr('record_id');
+            const row = $(this).children('td');
+           
+            $('#hidden_record_id').val(recordId);
+            $('#serialNumber').val(row.eq(1).text());
+            $('#partNumber').val(row.eq(2).text());
+            $('#datecode').val(row.eq(3).text());
+            $('#country').val(row.eq(4).text());
+            $('#testResult').val(row.eq(5).text());
+            $('#editModal').modal('show');
+        });
+
+        // Enable the "Save Changes" button when form fields are changed
+        $('#editForm input, #editForm select').on('input change', function() {
+            $('#saveChangesButton').prop('disabled', false);
+        });
+
+        // Handle datecode input for suggestions
+        $('#datecode').on('input', function() {
+            const query = $(this).val();
+            fetchDatecodeSuggestions(query).done(function(data) {
+                const suggestions = $('#datecodeSuggestions');
+                suggestions.empty();
+                data.forEach(datecode => {
+                    suggestions.append(new Option(datecode, datecode));
+                });
+            });
+        });
+    
+        // Handle save changes button click
+        $('#saveChangesButton').on('click', function() {
+            const formData = {
+                record_id: $('#hidden_record_id').val(),
+                serial_number: $('#serialNumber').val(),
+                part_number: $('#partNumber').val(),
+                datecode: $('#datecode').val(),
+                country: $('#country').val(),
+                test_result: $('#testResult').val()
+            };
+    
+            // Show spinner
+            $(this).prop('disabled', true).text('Saving...');
+    
+            $.ajax({
+                url: '/update_record',
+                method: 'POST',
+                data: formData,
+                success: function(response) {
+                    // Hide spinner
+                    $('#saveChangesButton').prop('disabled', false).text('Save changes');
+                    if (response.success) {
+                        showAlert('Changes saved successfully.', 'success');
+                        // $('#editModal').modal('hide');
+                        // Maybe update/refresh the table row with new data
+                        
+                    } else {
+                        showAlert('Failed to save changes: ' + response.error, 'danger');
+                    }
+                },
+                error: function() {
+                    // Hide spinner
+                    $('#saveChangesButton').prop('disabled', false).text('Save changes');
+                    showAlert('An error occurred while saving changes.', 'danger');
+                }
+            });
+        });
+
+            // Function to show alert message
+            function showAlert(message, type) {
+                $('#editAlertMessage').text(message);
+                $('#editAlert').removeClass('alert-success alert-danger').addClass('alert-' + type).show();
+                setTimeout(function() {
+                    $('#editAlert').fadeOut();
+                }, 3000);
+            }
+        // RECORD EDIT MODAL ENDS
    
+
+            // Function to determine row class based on test result
+            function getRowClass(testResult) {
+                switch (testResult.toLowerCase()) {
+                    case 'unknown':
+                        return 'table-light';
+                    case 'nff':
+                        return 'table-success';
+                    case 'vf':
+                        return 'table-danger';
+                    case 'vm/pps':
+                        return 'table-warning';
+                    default:
+                        return 'table-secondary';
+                }
+            }
     
     });  
 // Document ready ends

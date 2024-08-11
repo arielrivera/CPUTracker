@@ -26,7 +26,8 @@ cursor.execute('''
         part_number VARCHAR(20),
         datecode VARCHAR(10),
         country VARCHAR(15),
-        composite_snpn VARCHAR(30)
+        composite_snpn VARCHAR(30),
+        test_result VARCHAR(10) DEFAULT 'NONE'
     );
 ''')
 
