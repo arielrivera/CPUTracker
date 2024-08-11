@@ -1,0 +1,80 @@
+document.getElementById('start-btn').addEventListener('click', startProcess);
+document.getElementById('stop-btn').addEventListener('click', stopProcess);
+
+function startProcess() {
+    const mode = document.getElementById('mode-select').value;
+    document.getElementById('spinner').classList.remove('d-none');
+    document.getElementById('output').innerHTML = '';
+
+    fetch('/start_process', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ mode: mode })
+    }).then(response => response.json())
+      .then(data => {
+          document.getElementById('spinner').classList.add('d-none');
+          document.getElementById('output').innerHTML = data.message;
+      });
+}
+
+function stopProcess() {
+    fetch('/stop_process', {
+        method: 'POST'
+    }).then(response => response.json())
+      .then(data => {
+          document.getElementById('spinner').classList.add('d-none');
+          document.getElementById('output').innerHTML += '<br>' + data.message;
+      });
+}
+
+
+// document.getElementById('start-btn').addEventListener('click', startProcess);
+// document.getElementById('stop-btn').addEventListener('click', stopProcess);
+
+// const startBtn = document.getElementById('start-btn');
+// const stopBtn = document.getElementById('stop-btn');
+// const spinner = document.getElementById('spinner');
+// const output = document.getElementById('output');
+
+// function startProcess() {
+//     const mode = document.getElementById('mode-select').value;
+//     document.getElementById('spinner').classList.remove('d-none');
+//     document.getElementById('output').innerHTML = '';
+
+//     fetch('/run_process_logs')
+//         .then(response => response.text())
+//         .then(data => {
+//           document.getElementById('spinner').classList.add('d-none');
+//           document.getElementById('output').innerHTML = data.message;
+
+//           output.innerHTML += `<br>${data}`;
+//           // Hide the spinner
+//           spinner.classList.add('d-none');
+//         })
+//         .catch(error => {
+//             console.error('Error:', error);
+//             output.innerHTML += `<br>Error: ${error}`;
+//             // Hide the spinner
+//             spinner.classList.add('d-none');
+//       });
+
+// }
+
+// function stopProcess() {
+//     console.log('Stop button clicked');
+//     output.innerHTML = 'Process stopped.';
+//     spinner.classList.add('d-none');
+
+//     fetch('/stop_process', {
+//         method: 'POST'
+//     }).then(response => response.json())
+//       .then(data => {
+//           document.getElementById('spinner').classList.add('d-none');
+//           document.getElementById('output').innerHTML += '<br>' + data.message;
+//       });
+// }
+
+
+
