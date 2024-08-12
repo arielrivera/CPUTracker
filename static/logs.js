@@ -1,7 +1,14 @@
+$(document).ready(function() {
+    
+    fetchAuditLogs();
+
+});
+
 document.getElementById('start-btn').addEventListener('click', startProcess);
 document.getElementById('stop-btn').addEventListener('click', stopProcess);
 
 function startProcess() {
+    //fetchAuditLogs();
     const mode = document.getElementById('mode-select').value;
     document.getElementById('spinner').classList.remove('d-none');
     document.getElementById('output').innerHTML = '';
@@ -20,14 +27,14 @@ function startProcess() {
 }
 
 function stopProcess() {
-    stopFetchingLogs();
+    // stopFetchingLogs();
     fetch('/stop_process', {
         method: 'POST'
     }).then(response => response.json())
         .then(data => {
             document.getElementById('spinner').classList.add('d-none');
             document.getElementById('output').innerHTML += '<br>' + data.message;
-            stopFetchingLogs();
+            fetchAuditLogs();
         });
 }
 
@@ -46,18 +53,18 @@ function fetchAuditLogs() {
 }
 
 // Fetch logs every 5 seconds
-setInterval(fetchAuditLogs, 5000);
+// setInterval(fetchAuditLogs, 5000);
 
-document.addEventListener('DOMContentLoaded', fetchAuditLogs);
+// document.addEventListener('DOMContentLoaded', fetchAuditLogs);
 
-// Function to stop the interval
-function stopFetchingLogs() {
-    clearInterval(intervalId);
-    console.log('Stopped fetching logs.');
-}
+// // Function to stop the interval
+// function stopFetchingLogs() {
+//     clearInterval(intervalId);
+//     console.log('Stopped fetching logs.');
+// }
 
-// Example condition to stop the interval after 1 minute
-setTimeout(stopFetchingLogs, 120000); // Stops after 120 seconds
+// // Example condition to stop the interval after 1 minute
+// setTimeout(stopFetchingLogs, 120000); // Stops after 120 seconds
 
 
 // document.getElementById('start-btn').addEventListener('click', startProcess);

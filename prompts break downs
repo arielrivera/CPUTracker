@@ -114,3 +114,18 @@ The LOGS section interface page works as follows:
                 - If not more files to process then delete the  temp folder
 
 I want to change approach, I want all the routes and processes that deal with the LOGS section, like the routes and functions in the section "# --------- LOGS AREA START" to write output to the AUDIT table with "audit_type" field = "7zlogfiles" , so we need to create a function to write to the AUDIT table that can be accessed by routes and other functions. ANd then we will need to change the LOGS section template to show the data from the AUDIT table where "audit_type" field = "7zlogfiles" and todays date in "date_time" field ; So also, a route in app.py called "read_audit" needs to be created that accepts the field "audit_type" value to return records from the AUDIT table. Any questions ?
+
+
+
+
+
+
+in home.html template edit modal, lets get the modal to be fully responsive using bootstraps functionality, lets make the labels be in-line with the controls instead of showing up on top of the controls, unless we're on a mobile device on which the labels should then be on top of the control 
+
+
+
+In the login template, we need to use bootstrap styles whe nshowing the "invalid credentials" message, right now it only shows a blank page with that text, and no button or link to go back and try again or something similar, please suggest solutions
+
+
+
+I need to add a red button to the edit modal, pulled to the left, that says "Delete record" that when clicked it will alert the user with a warning that it will delete the record from the database and that it is irreversible, if th euser presses cancel then we return the user to the modal , if the user presses ok button then we call the /delete_record route , which we also need to create, then we wait for the response from the route and if successful then we clear out the modal controls from its body and  and only show the alert saying that the record was removed,and also remove the "delete record" and "save changes" button leaving only the "dismiss" button.   

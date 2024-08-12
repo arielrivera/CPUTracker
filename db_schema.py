@@ -27,7 +27,7 @@ cursor.execute('''
         datecode VARCHAR(10),
         country VARCHAR(15),
         composite_snpn VARCHAR(30),
-        test_result VARCHAR(10) DEFAULT 'NONE'
+        test_result VARCHAR(10) DEFAULT 'Unknown'
     );
 ''')
 
@@ -35,14 +35,14 @@ cursor.execute('''
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS AUDIT (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        serial_number VARCHAR(20) NOT NULL,
+        serial_number VARCHAR(20),
         date_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-        changes TEXT,
+        message TEXT,
         audit_type VARCHAR(10)
     );
 ''')
 
-# Create the AUDIT table
+# Create the PARTS table
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS PARTS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,6 +1,6 @@
 from flask import Flask, g, request, render_template, Response, jsonify, session, redirect, url_for, make_response, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3 , os, shutil, sqlite3, subprocess, threading, py7zr
+import sqlite3 , os, shutil, sqlite3, py7zr
 from flask_bootstrap import Bootstrap
 from datetime import datetime
 
@@ -50,11 +50,11 @@ def get_records():
     db = get_db()
     
     if records_per_page == 'all':
-        query = 'SELECT id, date_added, serial_number, part_number, datecode, country,test_result FROM UNITS ORDER BY date_added DESC'
+        query = 'SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn FROM UNITS ORDER BY date_added DESC'
         records = db.execute(query).fetchall()
     else:
         records_per_page = int(records_per_page)
-        query = 'SELECT id, date_added, serial_number, part_number, datecode, country,test_result FROM UNITS ORDER BY date_added DESC LIMIT ?'
+        query = 'SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn FROM UNITS ORDER BY date_added DESC LIMIT ?'
         records = db.execute(query, (records_per_page,)).fetchall()
     
     db.close()
@@ -88,7 +88,10 @@ def login():
             resp = make_response(redirect(url_for('index')))
             resp.set_cookie('mode', mode)
             return resp
-        return 'Invalid credentials'
+        
+        error = "Invalid credentials. Please try again."
+        return render_template('login.html', error=error)
+    
     return render_template('login.html')
 
 
@@ -137,11 +140,11 @@ def search():
 
     # Construct the SQL query
     if part_number.lower() == 'any':
-        query = "SELECT id, date_added, serial_number, part_number, datecode, country FROM UNITS WHERE serial_number LIKE ?"
+        query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn FROM UNITS WHERE serial_number LIKE ?"
         # print(query)
         params = (search_box + '%',)
     else:
-        query = "SELECT id, date_added, serial_number, part_number, datecode, country FROM UNITS WHERE serial_number LIKE ? AND part_number = ?"
+        query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn FROM UNITS WHERE serial_number LIKE ? AND part_number = ?"
         params = (search_box + '%', part_number)
 
     print(query)
@@ -163,7 +166,9 @@ def search():
             'serial_number': row[2],
             'part_number': row[3],
             'datecode': row[4],
-            'country': row[5]
+            'country': row[5],
+            'test_result': row[6],
+            'composite_snpn': row[7]       
         })
 
     return jsonify(results=results)
@@ -174,18 +179,18 @@ def search():
 def add():
     search_box = request.form.get('searchBox')
     part_number = request.form.get('partNumber')
-    # Implement your add logic here
-    # For example, add the item to the database
-    # Basic verification
+    composite_snpn = request.form.get('compositeSNPN')
+   
     if not search_box or not part_number:
         return jsonify(success=False, message="Missing data"), 400
 
-    # Add the new unit to the database
+    search_box = search_box.upper()
+    
     conn = get_db()
     cursor = conn.cursor()
 
     try:
-        cursor.execute('INSERT INTO units (serial_number, part_number) VALUES (?, ?)', (search_box, part_number))
+        cursor.execute('INSERT INTO units (serial_number, part_number, composite_snpn) VALUES (?, ?, ?)', (search_box, part_number, composite_snpn))
         conn.commit()
         success = True
     except Exception as e:
@@ -269,6 +274,8 @@ def update_record():
         return jsonify(success=False, error=str(e))
 
 
+# --------------------------------- AUDIT AREA START 
+
 def write_to_audit(message, audit_type):
     conn = get_db()
     cursor = conn.cursor()
@@ -307,6 +314,7 @@ def read_audit():
     conn.close()
     return jsonify(records)
 
+# --------------------------------- AUDIT AREA ENDS 
 
 # --------- LOGS AREA START
 # Global variable to ensure the process runs only once
@@ -391,7 +399,7 @@ def process_file(file_path, temp_folder, db):
 
 def process_logs(mode):
     global process_running
-    print("Process started in process_logs.py.")
+    write_to_audit('Running function process_logs.', '7zlogfiles')
     if process_running:
         return "Process is already running."
     process_running = True
@@ -411,6 +419,7 @@ def process_logs(mode):
 
     for file in files:
         result = process_file(file, temp_folder, db)
+        write_to_audit(f'process_logs->process_file: {result}.', '7zlogfiles')
         print(result)  # This would be sent to the web interface in a real application
 
     process_running = False
@@ -434,8 +443,8 @@ def start_process_route():
     if not process_running:
         process_running = True
         mode = request.json.get('mode', 'new-files')
-        threading.Thread(target=run_process_logs_in_context, args=(mode,)).start()
-    return jsonify({"message": "Process started"})
+        run_process_logs_in_context(mode)
+    return jsonify({"message": "Process started in route /start_process"})
 
 
 @app.route('/stop_process', methods=['POST'])
@@ -446,12 +455,40 @@ def stop_process():
 
 
 def run_process_logs_in_context(mode):
-    print('WIthin run_process_logs_in_context')
+    write_to_audit('Within run_process_logs_in_context', '7zlogfiles')
     with app.app_context():
         process_logs(mode)
         
 # --------- LOGS AREA END
 
+
+@app.route('/delete_record', methods=['POST'])
+def delete_record():
+    record_id = request.form['id']
+    success = delete_record_from_database(record_id)
+    
+    if success:
+        return jsonify(success=True)
+    else:
+        return jsonify(success=False)
+
+def delete_record_from_database(record_id):
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute("DELETE FROM UNITS WHERE id = ?", (record_id,))
+        conn.commit()
+        if cursor.rowcount == 0:
+            return False
+        
+        return True
+    except Exception as e:
+        print(f"Error deleting record: {e}")
+        return False
+    finally:
+        # Close the connection
+        conn.close()
 
 app.jinja_env.add_extension('jinja2.ext.do')
 
