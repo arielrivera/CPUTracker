@@ -268,50 +268,94 @@ def update_record():
         conn.close()
         return jsonify(success=False, error=str(e))
 
+
+def write_to_audit(message, audit_type):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO AUDIT (message, audit_type, date_time)
+        VALUES (?, ?, ?)
+    ''', (message, audit_type, datetime.now()))
+    conn.commit()
+    conn.close()
+
+@app.route('/read_audit', methods=['GET'])
+def read_audit():
+    audit_type = request.args.get('audit_type')
+    rowcount = request.args.get('rowcount', default=100, type=int)
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor = conn.cursor()
+    
+    if audit_type:
+        cursor.execute('''
+            SELECT * FROM AUDIT
+            WHERE audit_type = ? AND date(date_time) = date('now')
+            ORDER BY date_time DESC
+            LIMIT ?
+        ''', (audit_type, rowcount))
+    else:
+        cursor.execute('''
+            SELECT * FROM AUDIT
+            WHERE date(date_time) = date('now')
+            ORDER BY date_time DESC
+            LIMIT ?
+        ''', (rowcount,))
+   
+    
+    records = cursor.fetchall()
+    conn.close()
+    return jsonify(records)
+
+
 # --------- LOGS AREA START
 # Global variable to ensure the process runs only once
 process_running = False
 
-@app.route('/start_process', methods=['POST'])
-def start_process_route():
-    data = request.get_json()
-    mode = data.get('mode', 'new-files')
-    start_process(mode)
-    return jsonify({"message": "Process started in mode: " + mode})
+# @app.route('/start_process', methods=['POST'])
+# def start_process_route():
+#     data = request.get_json()
+#     mode = data.get('mode', 'new-files')
+#     start_process(mode)
+#     return jsonify({"message": "Process started in mode: " + mode})
 
-@app.route('/stop_process', methods=['POST'])
-def stop_process_route():
-    stop_process()
-    return jsonify({"message": "Process stopped."})
+# @app.route('/stop_process', methods=['POST'])
+# def stop_process_route():
+#     stop_process()
+#     return jsonify({"message": "Process stopped."})
 
 # Moved from abandoned extra py file 
 #
 def get_serial_number(file_name):
+    write_to_audit(f"get_serial_number,  file: {file_name}", '7zlogfiles')
     parts = file_name.split('_')
     if len(parts) > 2:
         return parts[1]
     return None
 
 def process_file(file_path, temp_folder, db):
+    write_to_audit(f"process_file,  file_path: {file_path}  temp_folder: {temp_folder}", '7zlogfiles')
     file_name = os.path.basename(file_path)
     serial_number = get_serial_number(file_name)
     if not serial_number:
+        write_to_audit("process_file,  Invalid file name format.", '7zlogfiles')
         return "Invalid file name format."
 
     # Copy file to temp folder
     temp_file_path = os.path.join(temp_folder, file_name)
     shutil.copy(file_path, temp_file_path)
-
+    write_to_audit(f"process_file,  temp_file_path: {temp_file_path}", '7zlogfiles')
     try:
         with py7zr.SevenZipFile(temp_file_path, mode='r') as archive:
             archive.extractall(path=temp_folder)
-        print(f"Extraction of {file} completed successfully.")
+        write_to_audit("process_file, Extraction of completed successfully.", '7zlogfiles')
+        
     except FileNotFoundError:
-        print(f"Error: File {temp_file_path} not found.")
+        write_to_audit(f"Error: File {temp_file_path} not found.", '7zlogfiles')
     except py7zr.exceptions.Bad7zFile:
-        print(f"Error: {temp_file_path} is not a valid 7z file.")
+        write_to_audit(f"Error: {temp_file_path} is not a valid 7z file.", '7zlogfiles')
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        write_to_audit(f"An error occurred: {str(e)}", '7zlogfiles')
 
     # Read Host_Status.txt
     host_status_path = os.path.join(temp_folder, 'Host_Status.txt')
@@ -331,6 +375,7 @@ def process_file(file_path, temp_folder, db):
             break
 
     # Store data in the database
+    db = get_db()
     cursor = db.cursor()
     cursor.execute("""
             INSERT INTO LOGS (file_name, serial_number, host_status, csv_file_name, csv_file_content) 
@@ -371,14 +416,40 @@ def process_logs(mode):
     process_running = False
     return "Process completed."
 
-def start_process(mode):
-    threading.Thread(target=process_logs, args=(mode,)).start()
+# def start_process(mode):
+#     threading.Thread(target=process_logs, args=(mode,)).start()
 
+# def stop_process():
+#     global process_running
+#     process_running = False 
+
+# def run_process_logs_in_context():
+#     with app.app_context():
+#         process_logs()
+
+# ---------
+@app.route('/start_process', methods=['POST'])
+def start_process_route():
+    global process_running
+    if not process_running:
+        process_running = True
+        mode = request.json.get('mode', 'new-files')
+        threading.Thread(target=run_process_logs_in_context, args=(mode,)).start()
+    return jsonify({"message": "Process started"})
+
+
+@app.route('/stop_process', methods=['POST'])
 def stop_process():
     global process_running
-    process_running = False 
+    process_running = False
+    return jsonify({"message": "Process stopped"})
 
 
+def run_process_logs_in_context(mode):
+    print('WIthin run_process_logs_in_context')
+    with app.app_context():
+        process_logs(mode)
+        
 # --------- LOGS AREA END
 
 

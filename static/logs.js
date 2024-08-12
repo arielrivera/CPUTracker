@@ -13,21 +13,51 @@ function startProcess() {
         },
         body: JSON.stringify({ mode: mode })
     }).then(response => response.json())
-      .then(data => {
-          document.getElementById('spinner').classList.add('d-none');
-          document.getElementById('output').innerHTML = data.message;
-      });
+        .then(data => {
+            document.getElementById('spinner').classList.add('d-none');
+            document.getElementById('output').innerHTML = data.message;
+        });
 }
 
 function stopProcess() {
+    stopFetchingLogs();
     fetch('/stop_process', {
         method: 'POST'
     }).then(response => response.json())
-      .then(data => {
-          document.getElementById('spinner').classList.add('d-none');
-          document.getElementById('output').innerHTML += '<br>' + data.message;
-      });
+        .then(data => {
+            document.getElementById('spinner').classList.add('d-none');
+            document.getElementById('output').innerHTML += '<br>' + data.message;
+            stopFetchingLogs();
+        });
 }
+
+function fetchAuditLogs() {
+    fetch('/read_audit?audit_type=7zlogfiles,rowcount=100')
+        .then(response => response.json())
+        .then(data => {
+            const outputElement = document.getElementById('output');
+            outputElement.innerHTML = '';
+            data.forEach(record => {
+                const logEntry = document.createElement('div');
+                logEntry.textContent = record.message;
+                outputElement.appendChild(logEntry);
+            });
+        });
+}
+
+// Fetch logs every 5 seconds
+setInterval(fetchAuditLogs, 5000);
+
+document.addEventListener('DOMContentLoaded', fetchAuditLogs);
+
+// Function to stop the interval
+function stopFetchingLogs() {
+    clearInterval(intervalId);
+    console.log('Stopped fetching logs.');
+}
+
+// Example condition to stop the interval after 1 minute
+setTimeout(stopFetchingLogs, 120000); // Stops after 120 seconds
 
 
 // document.getElementById('start-btn').addEventListener('click', startProcess);

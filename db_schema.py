@@ -37,7 +37,8 @@ cursor.execute('''
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         serial_number VARCHAR(20) NOT NULL,
         date_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-        changes TEXT
+        changes TEXT,
+        audit_type VARCHAR(10)
     );
 ''')
 
