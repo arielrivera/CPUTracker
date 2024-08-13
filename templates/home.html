@@ -155,6 +155,13 @@
                     <input type="hidden" id="hidden_record_id" name="hidden_record_id">
                     
                     <div class="form-group row">
+                        <label for="comp_snpn" class="col-md-4 col-form-label text-dark"><mark>SN_PN</mark></label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" id="comp_snpn" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
                         <label for="serialNumber" class="col-md-4 col-form-label text-dark"><mark>Serial Number</mark></label>
                         <div class="col-md-8">
                             <input type="text" class="form-control" id="serialNumber" pattern="[a-zA-Z0-9]+" required>
@@ -221,11 +228,11 @@
                 </div>
             </div>
             <div class="modal-footer container"> 
-                <div class="row">
-                    <div class="col-4"><button type="button" class="btn btn-danger text-nowrap" id="deleteRecordButton">Delete record</button></div>
-                    <div class="col-4"><button type="button" class="btn btn-secondary text-nowrap" id="dismissButton" data-dismiss="modal">Dismiss</button></div>
-                    <div class="col-4"><button type="button" class="btn btn-success text-nowrap" id="saveChangesButton" disabled>Save changes</button></div>
-                </div>
+                
+                <button type="button" class="btn btn-danger text-nowrap" id="deleteRecordButton">Delete record</button> 
+                <button type="button" class="btn btn-secondary text-nowrap" id="dismissButton" data-dismiss="modal">Dismiss</button> 
+                <button type="button" class="btn btn-success text-nowrap" id="saveChangesButton" disabled>Save changes</button> 
+                
             </div>
         </div>
     </div>
@@ -573,12 +580,14 @@ function setMode(mode) {
             });
         }
     
-        //Handle double-click on table rows
+        //Handle double-click on table rows to show Edit Modal
         $('#home_results_table tbody').on('dblclick', 'tr', function() {
             const recordId = $(this).attr('record_id');
+            const composite_snpn = $(this).attr('comp_snpn');
             const row = $(this).children('td');
            
             $('#hidden_record_id').val(recordId);
+            $('#comp_snpn').val(composite_snpn);
             $('#serialNumber').val(row.eq(1).text());
             $('#partNumber').val(row.eq(2).text());
             $('#datecode').val(row.eq(3).text());
@@ -627,6 +636,7 @@ function setMode(mode) {
         $('#saveChangesButton').on('click', function() {
             const formData = {
                 record_id: $('#hidden_record_id').val(),
+                comp_snpn: $('#comp_snpn').val(),
                 serial_number: $('#serialNumber').val(),
                 part_number: $('#partNumber').val(),
                 datecode: $('#datecode').val(),

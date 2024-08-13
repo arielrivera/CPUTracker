@@ -254,6 +254,7 @@ def get_datecode_suggestions():
 def update_record():
     data = request.form
     record_id = data['record_id']
+    composite_snpn = data['comp_snpn']
     serial_number = data['serial_number']
     part_number = data['part_number']
     datecode = data['datecode']
@@ -267,9 +268,9 @@ def update_record():
     try:
         cursor.execute('''
             UPDATE UNITS
-            SET serial_number =?, part_number = ?, datecode = ?, country = ?, test_result = ?, raw_failure = ?
+            SET composite_snpn=?, serial_number =?, part_number = ?, datecode = ?, country = ?, test_result = ?, raw_failure = ?
             WHERE id = ?
-        ''', (serial_number, part_number, datecode, country, test_result, raw_failure, record_id))
+        ''', (composite_snpn, serial_number, part_number, datecode, country, test_result, raw_failure, record_id))
         conn.commit()
         conn.close()
         return jsonify(success=True)
