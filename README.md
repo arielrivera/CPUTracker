@@ -39,15 +39,18 @@ CPU Tracker is a personal tool to keep track of parts received, inspected and te
 
     -On Mac / Linux 
     --First run or rebuilding if you make changes, run :
-        ```sh ./flarebrun.sh (Change your shell if you're not in a modern MacOs or not using szh)
+        ```sh 
+        ./flarebrun.sh (Change your shell if you're not in a modern MacOs or not using szh)
 
 
     -On windows:
     --First time run or rebuilding if you make changes, run :
-        ```sh \full_path\winFullBuildRun.bat
+        ```sh 
+        .\full_path\winFullBuildRun.bat
     
     --If only rerunning the container once it has been build then use:
-        ```sh \full_path\winSimpleRin.bat or just start the container using the Docker GUI etc...
+        ```sh 
+        \full_path\winSimpleRin.bat or just start the container using the Docker GUI etc...
 
 
 4. **Open the Web UI**:
@@ -56,8 +59,8 @@ CPU Tracker is a personal tool to keep track of parts received, inspected and te
 
 ## Usage
 
-- ** Click around...
+- Click around...
 
 ## License
 
-- ** Private use only
+- Private use only
