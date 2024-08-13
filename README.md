@@ -37,19 +37,21 @@ CPU Tracker is a personal tool to keep track of parts received, inspected and te
 
 3. **Build container and run the app**:
 
-    -On Mac / Linux 
-    --First run or rebuilding if you make changes, run :
-        ```sh 
-        ./flarebrun.sh (Change your shell if you're not in a modern MacOs or not using szh)
+    On Mac / Linux 
+         First run or rebuilding if you make changes, run :
+        
+        ./flarebrun.sh (Change your shell if you're not in a modern MacOs or not using szh).
+        
+        If only re-running the container without changes , just run the container again.  
 
 
     -On windows:
     --First time run or rebuilding if you make changes, run :
-        ```sh 
+        
         .\full_path\winFullBuildRun.bat
     
-    --If only rerunning the container once it has been build then use:
-        ```sh 
+    --If only re-running the container once it has been build then use:
+        
         \full_path\winSimpleRin.bat or just start the container using the Docker GUI etc...
 
 
