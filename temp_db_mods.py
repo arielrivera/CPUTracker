@@ -39,9 +39,10 @@ cursor = conn.cursor()
 #     );''')
 # conn.commit()
 
-# cursor.execute('DROP TABLE UNITS;')
+# cursor.execute('DROP TABLE UNITS_old;
+# cursor.execute('DROP TABLE UNITS_backup;')
 
-# # Commit the changes
+# # # # Commit the changes
 # conn.commit()
 
 # cursor.execute('ALTER TABLE UNITSNEW RENAME TO UNITS;')
@@ -55,39 +56,45 @@ cursor = conn.cursor()
 # conn.commit()
 
 # Step 1: Backup the UNITS table
-cursor.execute("CREATE TABLE UNITS_backup AS SELECT * FROM UNITS")
+# cursor.execute("CREATE TABLE UNITS_backup AS SELECT * FROM UNITS")
+# conn.commit()
+# # # Step 2: Alter the date_added column to DATE
+# cursor.execute("ALTER TABLE UNITS RENAME TO UNITS_old")
+# conn.commit()
 
-# Step 2: Alter the date_added column to DATE
-cursor.execute("ALTER TABLE UNITS RENAME TO UNITS_old")
+# cursor.execute('''
+#     CREATE TABLE IF NOT EXISTS UNITS (
+#         id INTEGER PRIMARY KEY AUTOINCREMENT,
+#         date_added DATE DEFAULT (CURRENT_DATE),
+#         serial_number VARCHAR(20) UNIQUE NOT NULL ,
+#         part_number VARCHAR(20),
+#         datecode VARCHAR(10),
+#         country VARCHAR(15),
+#         composite_snpn VARCHAR(30),
+#         test_result VARCHAR(10) DEFAULT 'Unknown',
+#         raw_failure VARCHAR(150)
+#     );
+# ''')
 
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS UNITS (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date_added DATE DEFAULT (CURRENT_DATE),
-        serial_number VARCHAR(20) UNIQUE NOT NULL ,
-        part_number VARCHAR(20),
-        datecode VARCHAR(10),
-        country VARCHAR(15),
-        composite_snpn VARCHAR(30),
-        test_result VARCHAR(10) DEFAULT 'Unknown'
-    );
-''')
+# # cursor.execute("DROP TABLE UNITS_backup;")
 
-cursor.execute("DROP TABLE UNITS;")
-
-conn.commit()
+# conn.commit()
 
 
 # cursor.execute("""
 #     INSERT INTO UNITS (date_added,serial_number,part_number,datecode,country,composite_snpn,test_result)
-#     SELECT DATE(date_added),serial_number,part_number, datecode,country,composite_snpn,test_result FROM UNITS_old
+#     SELECT DATE(date_added),serial_number,part_number, datecode,country,composite_snpn,test_result FROM UNITS_backup
 # """)
 # # cursor.execute("DROP TABLE UNITS_old")
 
 # # Commit the changes and close the connection
+cursor.execute("SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn,raw_failure FROM UNITS")
+# WHERE serial_number LIKE '9K4367V2008%'") 
+rows = cursor.fetchall()
+for row in rows:
+    print(row)
 
 
-conn.commit()
 
 
 conn.close()

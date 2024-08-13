@@ -50,11 +50,11 @@ def get_records():
     db = get_db()
     
     if records_per_page == 'all':
-        query = 'SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn FROM UNITS ORDER BY date_added DESC'
+        query = 'SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn, raw_failure FROM UNITS ORDER BY date_added DESC'
         records = db.execute(query).fetchall()
     else:
         records_per_page = int(records_per_page)
-        query = 'SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn FROM UNITS ORDER BY date_added DESC LIMIT ?'
+        query = 'SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn, raw_failure FROM UNITS ORDER BY date_added DESC LIMIT ?'
         records = db.execute(query, (records_per_page,)).fetchall()
     
     db.close()
@@ -135,16 +135,15 @@ def search():
         return jsonify(error="Serial number is required"), 400
 
     # Connect to the SQLite database
-    conn = sqlite3.connect('cputracker.db')  # Replace 'your_database.db' with your actual database file
+    conn = get_db()
     cursor = conn.cursor()
 
     # Construct the SQL query
     if part_number.lower() == 'any':
-        query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn FROM UNITS WHERE serial_number LIKE ?"
-        # print(query)
+        query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn,raw_failure FROM UNITS WHERE serial_number LIKE ?"
         params = (search_box + '%',)
     else:
-        query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn FROM UNITS WHERE serial_number LIKE ? AND part_number = ?"
+        query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn,raw_failure FROM UNITS WHERE serial_number LIKE ? AND part_number = ?"
         params = (search_box + '%', part_number)
 
     print(query)
@@ -160,6 +159,7 @@ def search():
     # Convert the results to a list of dictionaries
     results = []
     for row in rows:
+        print(row)
         results.append({
             'id': row[0],
             'date_added': row[1],
@@ -168,7 +168,9 @@ def search():
             'datecode': row[4],
             'country': row[5],
             'test_result': row[6],
-            'composite_snpn': row[7]       
+            'composite_snpn': row[7],
+            'raw_failure': row[8]
+            
         })
 
     return jsonify(results=results)
@@ -257,15 +259,17 @@ def update_record():
     datecode = data['datecode']
     country = data['country']
     test_result = data['test_result']
+    raw_failure = data['raw_failure']
+
 
     conn = get_db()
     cursor = conn.cursor()
     try:
         cursor.execute('''
             UPDATE UNITS
-            SET serial_number =?, part_number = ?, datecode = ?, country = ?, test_result = ?
+            SET serial_number =?, part_number = ?, datecode = ?, country = ?, test_result = ?, raw_failure = ?
             WHERE id = ?
-        ''', (serial_number, part_number, datecode, country, test_result, record_id))
+        ''', (serial_number, part_number, datecode, country, test_result, raw_failure, record_id))
         conn.commit()
         conn.close()
         return jsonify(success=True)

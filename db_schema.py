@@ -27,7 +27,8 @@ cursor.execute('''
         datecode VARCHAR(10),
         country VARCHAR(15),
         composite_snpn VARCHAR(30),
-        test_result VARCHAR(10) DEFAULT 'Unknown'
+        test_result VARCHAR(10) DEFAULT 'Unknown',
+        raw_failure VARCHAR(150)
     );
 ''')
 
