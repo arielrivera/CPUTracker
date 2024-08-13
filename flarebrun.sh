@@ -1,4 +1,5 @@
 #!/bin/zsh
+
 #Stop the container
 docker stop cputrackerapp
 #Remove the container
