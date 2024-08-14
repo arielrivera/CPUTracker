@@ -126,6 +126,12 @@ def logout():
     session.pop('user_id', None)
     return redirect(url_for('login'))
 
+@app.route('/reports')
+def reports():
+    db = get_db()
+    parts = db.execute('SELECT part_number FROM PARTS WHERE enabled = 1').fetchall()
+    return render_template('reports.html', parts=parts)
+
 
 @app.route('/search', methods=['POST'])
 def search():
@@ -146,8 +152,8 @@ def search():
         query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn,raw_failure FROM UNITS WHERE serial_number LIKE ? AND part_number = ?"
         params = (search_box + '%', part_number)
 
-    print(query)
-    print(params)
+    # print(query)
+    # print(params)
 
     # Execute the query and fetch the results
     cursor.execute(query, params)
@@ -175,7 +181,43 @@ def search():
 
     return jsonify(results=results)
 
+@app.route('/advanced_search', methods=['POST'])
+def advanced_search():
+    date_range = request.args.get('date_range')
+    part_number = request.args.get('part_number')
+    test_result = request.args.get('test_result')
+    datecode = request.args.get('datecode')
+    raw_failure = request.args.get('raw_failure')
 
+    query = "SELECT * FROM UNITS WHERE 1=1"
+    params = []
+
+    if date_range:
+        start_date, end_date = date_range.split(' to ')
+        query += " AND date BETWEEN ? AND ?"
+        params.extend([start_date, end_date])
+
+    if part_number and part_number != 'any':
+        query += " AND part_number = ?"
+        params.append(part_number)
+
+    if test_result and test_result != 'any':
+        query += " AND test_result = ?"
+        params.append(test_result)
+
+    if datecode:
+        query += " AND datecode = ?"
+        params.append(datecode)
+
+    if raw_failure:
+        query += " AND raw_failure LIKE ?"
+        params.append(f"%{raw_failure}%")
+
+    conn = get_db()
+    results = conn.execute(query, params).fetchall()
+    conn.close()
+
+    return jsonify([dict(row) for row in results])
 
 @app.route('/add', methods=['POST'])
 def add():

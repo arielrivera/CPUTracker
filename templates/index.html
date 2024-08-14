@@ -2,10 +2,15 @@
 <html>
 <head>
     <title>CPUTracker</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-datepicker.min.css') }}">
+
     <script src="{{ url_for('static', filename='jquery-3.5.1.min.js') }}"></script>
     <script src="{{ url_for('static', filename='popper.min.js') }}"></script>
     <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap-datepicker.min.js') }}"></script>
+
  
     <script>
             
@@ -77,6 +82,13 @@
             if (targetId === '#settings') {
                 $.get('/settings', function(data) {
                     $('#settings').html(data);
+                });
+            }
+
+            // Load content for Settings tab
+            if (targetId === '#reports') {
+                $.get('/reports', function(data) {
+                    $('#reports').html(data);
                 });
             }
 
@@ -163,6 +175,9 @@
             <li class="nav-item">
                 <a class="nav-link" id="settings-tab" data-toggle="tab" href="#settings" role="tab" aria-controls="settings" aria-selected="false">Settings</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" id="reports-tab" data-toggle="tab" href="#reports" role="tab" aria-controls="reports" aria-selected="false">Reports</a>
+            </li>
             <li class="nav-item ml-auto">
                 <a class="nav-link" href="#logout">Logout</a>
 
@@ -184,6 +199,11 @@
 
 
             </div>
+            <div id="reports" class="tab-pane fade"  role="tabpanel" aria-labelledby="reports-tab">
+
+
+            </div>
+
         </div>
         
 
