@@ -1,5 +1,9 @@
 FROM python:3.9
 
+RUN apt-get update && apt-get install -y tzdata
+ENV TZ=America/Chicago
+RUN ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
+
 WORKDIR /app
 
 COPY requirements.txt .
