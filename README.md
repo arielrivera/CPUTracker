@@ -33,7 +33,7 @@ CPU Tracker is a personal tool to keep track of parts received, inspected and te
    ```sh
    git clone https://github.com/arielrivera/cputracker.git
 
-2. **Docker**: Make sure you're running Docker in your sistem.
+2. **Docker**: Make sure you're running Docker in your system.
 
 3. **Build container and run the app**:
 
@@ -62,6 +62,7 @@ CPU Tracker is a personal tool to keep track of parts received, inspected and te
 ## Usage
 
 - Click around...
+- As in any other docker image, docker exec -it cputrackerapp sh
 
 ## License
 

@@ -79,7 +79,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         conn = get_db()
-        user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+        user = conn.execute('SELECT * FROM users WHERE  username = ? and enabled=1', (username,)).fetchone()
         conn.close()
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
@@ -131,6 +131,7 @@ def reports():
     db = get_db()
     parts = db.execute('SELECT part_number FROM PARTS WHERE enabled = 1').fetchall()
     return render_template('reports.html', parts=parts)
+
 
 
 @app.route('/search', methods=['POST'])

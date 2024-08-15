@@ -88,13 +88,55 @@ cursor = conn.cursor()
 # # cursor.execute("DROP TABLE UNITS_old")
 
 # # Commit the changes and close the connection
-cursor.execute("SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn,raw_failure FROM UNITS")
-# WHERE serial_number LIKE '9K4367V2008%'") 
+# cursor.execute("SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn,raw_failure FROM UNITS")
+# # WHERE serial_number LIKE '9K4367V2008%'") 
+# rows = cursor.fetchall()
+# for row in rows:
+#     print(row)
+
+
+
+# cursor.execute('PRAGMA table_info(users);')
+# rows = cursor.fetchall()
+# for row in rows:
+#     print(row)
+
+# # Add the 'enabled' column to the 'users' table
+# cursor.execute('ALTER TABLE users ADD COLUMN enabled BOOLEAN DEFAULT 0')
+
+# # Commit the changes and close the connection
+# conn.commit()
+
+# # Get the CREATE statement for the 'users' table
+# cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'")
+# create_statement = cursor.fetchone()
+
+# if create_statement:
+#     print(create_statement[0])
+# else:
+#     print("Table 'users' does not exist.")
+# conn.commit()
+
+# # Add the 'enabled' column to the 'UNITS' table
+# cursor.execute('ALTER TABLE UNITS ADD COLUMN user_id INTEGER')
+
+# # Add the 'user_id' column to the 'AUDIT' table
+# cursor.execute('ALTER TABLE AUDIT ADD COLUMN user_id INTEGER')
+
+# # Add the 'user_id' column to the 'PARTS' table
+# cursor.execute('ALTER TABLE PARTS ADD COLUMN user_id INTEGER')
+
+# cursor.execute('ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT 0')
+
+# cursor.execute('UPDATE users set is_admin=1 where username="ariel";')
+# cursor.execute('UPDATE users set enabled=1 where username="ariel";')
+
+cursor.execute('SELECT * FROM users WHERE  username = "ariel";')
 rows = cursor.fetchall()
 for row in rows:
     print(row)
 
-
+conn.commit()
 
 
 conn.close()

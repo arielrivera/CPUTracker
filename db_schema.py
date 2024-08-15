@@ -28,7 +28,8 @@ cursor.execute('''
         country VARCHAR(15),
         composite_snpn VARCHAR(30),
         test_result VARCHAR(10) DEFAULT 'Unknown',
-        raw_failure VARCHAR(150)
+        raw_failure VARCHAR(150),
+        user_id INTEGER
     );
 ''')
 
@@ -39,7 +40,8 @@ cursor.execute('''
         serial_number VARCHAR(20),
         date_time DATETIME DEFAULT CURRENT_TIMESTAMP,
         message TEXT,
-        audit_type VARCHAR(10)
+        audit_type VARCHAR(10),
+        user_id INTEGER
     );
 ''')
 
@@ -49,7 +51,18 @@ cursor.execute('''
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         part_number VARCHAR(20) NOT NULL,
         date_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-        enabled BOOLEAN DEFAULT TRUE
+        enabled BOOLEAN DEFAULT TRUE,
+        user_id INTEGER
+    );
+''')
+
+# Create the  users
+cursor.execute('''
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL
+, enabled BOOLEAN DEFAULT 0) 
     );
 ''')
 

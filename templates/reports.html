@@ -8,10 +8,9 @@
             <form id="advancedSearchForm">
                 <div class="form-row">
                     <!-- Date or date range selection control -->
-                    <div class="col-md-3 mb-3" data-provide="datepicker">
+                    <div class="col-md-3 mb-3">
                         <label for="dateRange">Date Range</label>
-                       <input type="text" class="form-control" id="dateRange" name="dateRange" placeholder="Select date" data-date-format="yyyy-mm-dd">
-                          
+                        <input type="text" class="form-control" id="dateRange" name="dateRange" placeholder="Select date" data-date-format="yyyy-mm-dd">
                     </div>
                     <!-- Part number dropdown -->
                     <div class="col-md-3 mb-3">
@@ -30,12 +29,11 @@
                         <label for="adv_result">Result</label>
                         <select class="form-control" id="adv_result" name="adv_result">
                             <option value="any">Any</option>
-                                <option value="NFF">Pass (NFF)</option>
-                                <option value="VF">Fail (VF)</option>
-                                <option value="VM/PPS">Scrap (VM/PPS)</option>
-                                <option value="TESTING">Test in progress</option>
-                                <option value="Unknown">Unknown</option>
-                            
+                            <option value="NFF">Pass (NFF)</option>
+                            <option value="VF">Fail (VF)</option>
+                            <option value="VM/PPS">Scrap (VM/PPS)</option>
+                            <option value="TESTING">Test in progress</option>
+                            <option value="Unknown">Unknown</option>
                         </select>
                     </div>
                     <!-- Date code input -->
@@ -52,8 +50,8 @@
                         <input type="text" class="form-control" id="adv_rawFailure" name="rawFailure" placeholder="Enter Raw Failure">
                     </div>
                 </div>
-                <button type="button" class="btn btn-secondary mr-2" onclick="document.getElementById('advancedSearchForm').reset();">Reset form</button>
-                <button type="submit" class="btn btn-primary" id="reportSubmit">Submit</button>
+                <button type="button" class="btn btn-secondary mr-2" onclick="document.getElementById('advancedSearchForm').reset();$('#buttonOptions').hide();">Reset form</button>
+                <button type="submit" class="btn btn-primary float-right" id="reportSubmit">Submit</button>
             </form>
         </div>
     </div>
@@ -65,13 +63,13 @@
     <!-- Button options section -->
     <div id="buttonOptions" class="mb-4" style="display: none;">
         <button class="btn btn-primary" id="foxconnReportBtn">Foxconn Report</button>
-        <button class="btn btn-info">Export as CSV</button>
-        <button class="btn btn-info">Export as HTML</button>
+        <button class="btn btn-info" disabled>Export as CSV</button>
+
     </div>
 
     <!-- Search results section -->
     <div id="searchResults">
-        <table class="table table-bordered" id="adv-search-results">
+        <table class="table table-bordered d-none" id="adv-search-results">
             <thead>
                 <tr>
                     <th>Date added</th>
@@ -95,28 +93,25 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script> -->
 <script>
-    $(document).ready(function() 
-    {
+    $(document).ready(function() {
         // Initialize the datepicker
         $('#dateRange').datepicker({
             format: 'yyyy-mm-dd',
             todayHighlight: true,
             autoclose: true,
-            clearBtn: true,
-            inputs: $('.actual_range')
+            clearBtn: true
         });
 
         $('#advancedSearchForm').on('submit', function(event) {
             event.preventDefault();
 
-
             console.log('Report submit Button clicked' + $('#dateRange').val());
-            event.preventDefault();
             
             // Retrieve the values from the input fields
             let dateRangeValue = $('#dateRange').val();
-            let dateParts = dateRangeValue.split('/'); // Assuming the format is mm/dd/yyyy
-            let formattedDate = `${dateParts[2]}-${dateParts[0]}-${dateParts[1]}`;
+            // console.log('Original Date Range:', dateRangeValue);
+            // let dateParts = dateRangeValue.split('/'); // Assuming the format is mm/dd/yyyy
+            // let formattedDate = `${dateParts[2]}-${dateParts[0]}-${dateParts[1]}`;
             let partNumberValue = $('#adv_partNumber').val();
             let resultValue = $('#adv_result').val();
             let dateCodeValue = $('#adv_datecode').val();
@@ -126,27 +121,23 @@
                 url: '/advanced_search',
                 method: 'POST',
                 data: {
-                    date_range: formattedDate,
+                    date_range: dateRangeValue,
                     part_number: partNumberValue,
                     test_result: resultValue,
                     datecode: dateCodeValue,
                     raw_failure: rawFailureValue
-                    
                 },
                 success: function(response) {
                     // Handle the response
                     console.log('Search Response:', response);
-                    console.log("Is results array : "+Array.isArray(response.results));
+                    console.log("Is results array : " + Array.isArray(response.results));
                     
                     // Check if the response is successful and contains the expected fields
-                    if (response.results && Array.isArray(response.results)) 
-                    {
+                    if (response.results && Array.isArray(response.results)) {
                         // Clear existing table rows
                         $('#adv-search-results tbody').empty();
-                        response.results.forEach(result => 
-                        {
-                            if (result.serial_number && result.part_number) 
-                            {
+                        response.results.forEach(result => {
+                            if (result.serial_number && result.part_number) {
                                 // Append new rows to the table
                                 var row = '<tr comp_snpn="' + result.composite_snpn + '" record_id="' + result.id + '" class="' + getRowClass(result.test_result) + '">' +
                                     '<td class="text-nowrap">' + result.date_added + '</td>' +
@@ -158,8 +149,11 @@
                                     '<td>' + result.test_result + '</td>' +
                                     '</tr>';
                                 $('#adv-search-results tbody').append(row);
-                            } else 
-                            {
+                                $('#adv-search-results').removeClass('d-none');
+
+                                $('#buttonOptions').show();
+
+                            } else {
                                 console.error('Missing expected fields in result:', result);
                             }
                         });
@@ -167,63 +161,50 @@
                         console.error('Invalid response:', response);
                     }
                 }
-
             });
-                
         });
 
+        
 
-    $('#buttonOptions').show();
-           
-    
-    
-    $('#dateRange').datepicker({ format: "yyyy-mm-dd" });
-
-
-    // Fetch datecode suggestions
-    function adv_fetchDatecodeSuggestions(query) {
-        return $.ajax({
-            url: '/get_datecode_suggestions',
-            method: 'GET',
-            data: { query: query }
-        });
-    }
+        // Fetch datecode suggestions
+        function adv_fetchDatecodeSuggestions(query) {
+            return $.ajax({
+                url: '/get_datecode_suggestions',
+                method: 'GET',
+                data: { query: query }
+            });
+        }
 
         // Handle datecode input for suggestions
         $('#adv_datecode').on('input', function() {
-                    const query = $(this).val();
-                    adv_fetchDatecodeSuggestions(query).done(function(data) {
-                        const suggestions = $('#adv_datecodeSuggestions');
-                        suggestions.empty();
-                        data.forEach(datecode => {
-                            suggestions.append(new Option(datecode, datecode));
-                        });
-                    });
+            const query = $(this).val();
+            adv_fetchDatecodeSuggestions(query).done(function(data) {
+                const suggestions = $('#adv_datecodeSuggestions');
+                suggestions.empty();
+                data.forEach(datecode => {
+                    suggestions.append(new Option(datecode, datecode));
                 });
-
-
-
-
-    
+            });
+        });
     });
 
     // Function to determine row class based on test result
     function getRowClass(testResult) {
-    switch (testResult.toLowerCase()) {
-        case 'unknown':
-            return 'table-light';
-        case 'nff':
-            return 'table-success';
-        case 'vf':
-            return 'table-danger';
-        case 'vm/pps':
-            return 'table-warning';
-        case 'testing':
-            return 'table-info';
-        default:
-            return 'table-secondary';
+        switch (testResult.toLowerCase()) {
+            case 'unknown':
+                return 'table-light';
+            case 'nff':
+                return 'table-success';
+            case 'vf':
+                return 'table-danger';
+            case 'vm/pps':
+                return 'table-warning';
+            case 'testing':
+                return 'table-info';
+            default:
+                return 'table-secondary';
+        }
     }
-}
 </script>
 
 <script>
@@ -252,33 +233,30 @@
                 }
             });
 
-            // Wrap the table in basic HTML tags
-            // var tableContent = `
-            //     <!DOCTYPE html>
-            //     <html lang="en">
-            //     <head>
-            //         <meta charset="UTF-8">
-            //         <title>Foxconn Report</title>
-            //     </head>
-            //     <body>
-            //         ${$('#adv-search-results')[0].outerHTML}
-            //     </body>
-            //     </html>
-            // `;
-            // // Copy the table to clipboard
-            var tableContent = $('#adv-search-results')[0].outerHTML;
-            var tempElement = $('<textarea>').val(tableContent).appendTo('body').select();
+            // Add the table-sm class to the table
+            $('#adv-search-results').addClass('table-sm');
+
+            // Copy the table with styling to the clipboard
+            var table = document.getElementById('adv-search-results');
+            var range = document.createRange();
+            range.selectNode(table);
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+
             try {
                 document.execCommand('copy');
                 showAlert('Table copied to clipboard successfully!', 'alert-success');
             } catch (err) {
                 showAlert('Failed to copy table to clipboard.', 'alert-danger');
             }
-            //     navigator.clipboard.writeText(tableContent).then(function() {
-            //     showAlert('Table copied to clipboard successfully!', 'alert-success');
-            // }).catch(function() {
-            //     showAlert('Failed to copy table to clipboard.', 'alert-danger');
-            // });
+
+            // Clear the selection
+            selection.removeAllRanges();
+        
+        
+        
+        
         });
 
         function showAlert(message, alertClass) {
