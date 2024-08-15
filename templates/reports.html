@@ -52,6 +52,7 @@
                         <input type="text" class="form-control" id="adv_rawFailure" name="rawFailure" placeholder="Enter Raw Failure">
                     </div>
                 </div>
+                <button type="button" class="btn btn-secondary mr-2" onclick="document.getElementById('advancedSearchForm').reset();">Reset form</button>
                 <button type="submit" class="btn btn-primary" id="reportSubmit">Submit</button>
             </form>
         </div>
@@ -63,9 +64,9 @@
 
     <!-- Button options section -->
     <div id="buttonOptions" class="mb-4" style="display: none;">
-        <button class="btn btn-secondary">Foxcon Report</button>
-        <button class="btn btn-secondary">Export as CSV</button>
-        <button class="btn btn-secondary">Export as HTML</button>
+        <button class="btn btn-info" id="foxconnReportBtn">Foxcon Report</button>
+        <button class="btn btn-info">Export as CSV</button>
+        <button class="btn btn-info">Export as HTML</button>
     </div>
 
     <!-- Search results section -->
@@ -226,4 +227,49 @@
             return 'table-secondary';
     }
 }
+</script>
+
+<script>
+    $(document).ready(function() {
+        $('#foxconnReportBtn').click(function() {
+            // Hide the "Raw Failure" column
+            $('#adv-search-results th:nth-child(6), #adv-search-results td:nth-child(6)').hide();
+
+            // Change "Date added" to "Date received"
+            $('#adv-search-results th:nth-child(1)').text('Date received');
+
+            // Remove Bootstrap row classes
+            $('#adv-search-results tbody tr').removeClass('table-success table-danger table-warning table-info table-primary table-secondary table-light table-dark');
+
+            // Iterate through the "Result" column and update values
+            $('#adv-search-results tbody tr').each(function() {
+                var resultCell = $(this).find('td:nth-child(7)');
+                var resultValue = resultCell.text().trim();
+
+                if (resultValue === 'VM/PPS') {
+                    resultCell.text('Scrap / Power Plain Short');
+                } else if (resultValue === 'NFF' || resultValue === 'VF') {
+                    resultCell.text('Return to AMD');
+                } else {
+                    resultCell.text('Not tested yet');
+                }
+            });
+
+            // Copy the table to clipboard
+            var tableContent = $('#adv-search-results')[0].outerHTML;
+            navigator.clipboard.writeText(tableContent).then(function() {
+                showAlert('Table copied to clipboard successfully!', 'alert-success');
+            }).catch(function() {
+                showAlert('Failed to copy table to clipboard.', 'alert-danger');
+            });
+        });
+
+        function showAlert(message, alertClass) {
+            var alertDiv = $('#reports-alert-message');
+            alertDiv.removeClass('alert-success alert-danger').addClass(alertClass).text(message).show();
+            setTimeout(function() {
+                alertDiv.hide();
+            }, 5000);
+        }
+    });
 </script>

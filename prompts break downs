@@ -125,27 +125,33 @@ I want to have a checkbox above the search results table, in line with the "show
 
 Also, I want to make the font size in the cells for the "Raw FAilure" column be smaller , using bootstraps' styles.
 
-
-
 I need to create a "Reports" tab and area and template where I would have :
-1. A top bar "advanced Search" 
+
+1. A top bar "advanced Search"
 2. A setion below to show the button options: Foxcon report, Export as CSV , Export as HTML .
 3. A section below where the search results will be shown in an html table
 
 Each of the above sections are described below:
 
 1. The topbar "Advanced Search" will have an "advenced search" type section where I could select the following Search options
-    -- Date or date range selection control.
-    -- Part number, should show the same part number dropdown as in home.html template, except the Add part number option; if not specified let it be any so the select search in the route call does not include the field.
-    -- Result, it should show the same result dropdown as in home's edit modal for part number; if not specified let it be any so the select search in the route call does not include the field.
-    --Date code, if not specified let it be any so the select search in the route call does not include the field.
-    -- Raw Failure contains, which should make the route perform a "LIKE keyword%" SQL query on this field,  if not specified let it be any so the select search in the route call does not include the field.
-    -- A button to submit the search.
+   -- Date or date range selection control.
+   -- Part number, should show the same part number dropdown as in home.html template, except the Add part number option; if not specified let it be any so the select search in the route call does not include the field.
+   -- Result, it should show the same result dropdown as in home's edit modal for part number; if not specified let it be any so the select search in the route call does not include the field.
+   --Date code, if not specified let it be any so the select search in the route call does not include the field.
+   -- Raw Failure contains, which should make the route perform a "LIKE keyword%" SQL query on this field, if not specified let it be any so the select search in the route call does not include the field.
+   -- A button to submit the search.
 
-2. This section or div will show the options Foxcon report, Export as CSV , Export as HTML  as mentioned, and should only be shown after the submit button is pressed
+2. This section or div will show the options Foxcon report, Export as CSV , Export as HTML as mentioned, and should only be shown after the submit button is pressed
 
 3. This will be where the results of the search will be shown an will be the same html table type as home's search results table but will have no functionality as clicks, double clicks etc. It will always show all the records returned by the search route call performed.
 
+Lets create functionality to the "Foxconn report" button as follows:
+-When clicked we will hide the column Raw Failure and its cells.
+-We changet he column "Date added" name to "Date received".
+-We remove all bootstrap's row class stlyes for coloring like table-success, table-danger etc., in all rows of the table
+-We will iterate through the column Result checking it's value and proceeding as follows:
+-- If the value of the cell is VM/PPS then we change the value to "Scrap / Power Plain Short"
+-- If the value of the cell is NFF or VF then we change the value of the cell to "Return to AMD"
+-- If the value of the cell is Unknown, TESTING or anything else then we change the cell value to "Not tested" yet.
 
-
-
+Then we attempt to copy the whole results table to memory buffer so the user can paste it anywhere and notify the user if we were successful in copying the date to memory or not. Use the reports-alert-message div to show the success result or alert for failure respectively. This alert should be wiped and disapear after 5 secs
