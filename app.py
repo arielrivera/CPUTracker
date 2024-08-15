@@ -183,19 +183,23 @@ def search():
 
 @app.route('/advanced_search', methods=['POST'])
 def advanced_search():
-    date_range = request.args.get('date_range')
-    part_number = request.args.get('part_number')
-    test_result = request.args.get('test_result')
-    datecode = request.args.get('datecode')
-    raw_failure = request.args.get('raw_failure')
+    date_range = request.form.get ('date_range')
+    part_number = request.form.get('part_number')
+    test_result = request.form.get('test_result')
+    datecode = request.form.get('datecode')
+    raw_failure = request.form.get('raw_failure')
 
     query = "SELECT * FROM UNITS WHERE 1=1"
     params = []
 
+    # if date_range and end_date:
+    #     start_date, end_date = date_range.split(' to ')
+    #     query += " AND date BETWEEN ? AND ?"
+    #     params.extend([start_date, end_date])
+
     if date_range:
-        start_date, end_date = date_range.split(' to ')
-        query += " AND date BETWEEN ? AND ?"
-        params.extend([start_date, end_date])
+        query += " AND date_added = ?"
+        params.append(date_range)
 
     if part_number and part_number != 'any':
         query += " AND part_number = ?"
@@ -213,11 +217,12 @@ def advanced_search():
         query += " AND raw_failure LIKE ?"
         params.append(f"%{raw_failure}%")
 
+    print(params)
     conn = get_db()
     results = conn.execute(query, params).fetchall()
     conn.close()
 
-    return jsonify([dict(row) for row in results])
+    return jsonify(results=[dict(row) for row in results])
 
 @app.route('/add', methods=['POST'])
 def add():

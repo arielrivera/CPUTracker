@@ -10,13 +10,13 @@
                     <!-- Date or date range selection control -->
                     <div class="col-md-3 mb-3" data-provide="datepicker">
                         <label for="dateRange">Date Range</label>
-                       <input type="text" class="form-control" id="dateRange" name="dateRange" placeholder="Select date range">
+                       <input type="text" class="form-control" id="dateRange" name="dateRange" placeholder="Select date" data-date-format="yyyy-mm-dd">
                           
                     </div>
                     <!-- Part number dropdown -->
                     <div class="col-md-3 mb-3">
-                        <label for="partNumber">Part Number</label>
-                        <select class="form-control" id="partNumber" name="partNumber">
+                        <label for="adv_partNumber">Part Number</label>
+                        <select class="form-control" id="adv_partNumber" name="adv_partNumber">
                             <option value="any">Any</option>
                             {% if parts %}
                             {% for part in parts %}
@@ -27,8 +27,8 @@
                     </div>
                     <!-- Result dropdown -->
                     <div class="col-md-3 mb-3">
-                        <label for="result">Result</label>
-                        <select class="form-control" id="result" name="result">
+                        <label for="adv_result">Result</label>
+                        <select class="form-control" id="adv_result" name="adv_result">
                             <option value="any">Any</option>
                                 <option value="NFF">Pass (NFF)</option>
                                 <option value="VF">Fail (VF)</option>
@@ -40,16 +40,16 @@
                     </div>
                     <!-- Date code input -->
                     <div class="col-md-3 mb-3">
-                        <label for="dateCode">Date Code</label>
-                        <input type="text" class="form-control" id="datecode" list="datecodeSuggestions">
+                        <label for="adv_dateCode">Date Code</label>
+                        <input type="text" class="form-control" id="adv_datecode" list="datecodeSuggestions">
                         <datalist id="datecodeSuggestions">
                             <!-- Suggestions will be populated dynamically -->
                         </datalist>
                     </div>
                     <!-- Raw Failure contains input -->
                     <div class="col-md-3 mb-3">
-                        <label for="rawFailure">Raw Failure Contains</label>
-                        <input type="text" class="form-control" id="rawFailure" name="rawFailure" placeholder="Enter Raw Failure">
+                        <label for="adv_rawFailure">Raw Failure Contains</label>
+                        <input type="text" class="form-control" id="adv_rawFailure" name="rawFailure" placeholder="Enter Raw Failure">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" id="reportSubmit">Submit</button>
@@ -73,13 +73,13 @@
         <table class="table table-bordered" id="adv-search-results">
             <thead>
                 <tr>
-                    <th>Column 1</th>
-                    <th>Column 2</th>
-                    <th>Column 3</th>
-                    <th>Column 3</th>
-                    <th>Column 3</th>
-                    <th>Column 3</th>
-                    <th>Column 3</th>
+                    <th>Date added</th>
+                    <th>Serial</th>
+                    <th>Part #</th>
+                    <th>Datecode</th>
+                    <th>Country</th>
+                    <th>Raw Failure</th>
+                    <th>Result</th>
                     <!-- Add more columns as needed -->
                 </tr>
             </thead>
@@ -94,7 +94,8 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script> -->
 <script>
-    $(document).ready(function() {
+    $(document).ready(function() 
+    {
         // Initialize the datepicker
         $('#dateRange').datepicker({
             format: 'yyyy-mm-dd',
@@ -108,21 +109,23 @@
             event.preventDefault();
 
 
-            console.log('Report submit Button clicked');
+            console.log('Report submit Button clicked' + $('#dateRange').val());
             event.preventDefault();
             
             // Retrieve the values from the input fields
             let dateRangeValue = $('#dateRange').val();
-            let partNumberValue = $('#partNumber').val();
-            let resultValue = $('#result').val();
-            let dateCodeValue = $('#datecode').val();
-            let rawFailureValue = $('#rawFailure').val();
+            let dateParts = dateRangeValue.split('/'); // Assuming the format is mm/dd/yyyy
+            let formattedDate = `${dateParts[2]}-${dateParts[0]}-${dateParts[1]}`;
+            let partNumberValue = $('#adv_partNumber').val();
+            let resultValue = $('#adv_result').val();
+            let dateCodeValue = $('#adv_datecode').val();
+            let rawFailureValue = $('#adv_rawFailure').val();
 
             $.ajax({
                 url: '/advanced_search',
                 method: 'POST',
                 data: {
-                    date_range: dateRangeValue,
+                    date_range: formattedDate,
                     part_number: partNumberValue,
                     test_result: resultValue,
                     datecode: dateCodeValue,
@@ -132,6 +135,8 @@
                 success: function(response) {
                     // Handle the response
                     console.log('Search Response:', response);
+                    console.log("Is results array : "+Array.isArray(response.results));
+                    
                     // Check if the response is successful and contains the expected fields
                     if (response.results && Array.isArray(response.results)) 
                     {
@@ -143,12 +148,12 @@
                             {
                                 // Append new rows to the table
                                 var row = '<tr comp_snpn="' + result.composite_snpn + '" record_id="' + result.id + '" class="' + getRowClass(result.test_result) + '">' +
-                                    '<td class="text-nowrap">' + result.datecode + '</td>' +
+                                    '<td class="text-nowrap">' + result.date_added + '</td>' +
                                     '<td>' + result.serial_number + '</td>' +
                                     '<td class="text-nowrap">' + result.part_number + '</td>' +
                                     '<td>' + result.datecode + '</td>' +
                                     '<td>' + result.country + '</td>' +
-                                    '<td class="raw-failure-column"><span class="cell-content">' + result.raw_failure + '</span></td>' +
+                                    '<td>' + result.raw_failure + '</td>' +
                                     '<td>' + result.test_result + '</td>' +
                                     '</tr>';
                                 $('#adv-search-results tbody').append(row);
@@ -171,23 +176,10 @@
 
 
             $('#buttonOptions').show();
-            // Populate the search results table with dummy data for demonstration
-            $('#searchResults tbody').html(`
-                <tr>
-                    <td>Data 1</td>
-                    <td>Data 2</td>
-                    <td>Data 3</td>
-                </tr>
-                <tr>
-                    <td>Data 4</td>
-                    <td>Data 5</td>
-                    <td>Data 6</td>
-                </tr>
-            `);
-        
+           
     
     
-        $('.dateRange').datepicker({ format: "yyyy-mm-dd" });
+        $('#dateRange').datepicker({ format: "yyyy-mm-dd" });
 
 
         // Fetch datecode suggestions
@@ -216,4 +208,22 @@
 
     
     });
+
+    // Function to determine row class based on test result
+    function getRowClass(testResult) {
+    switch (testResult.toLowerCase()) {
+        case 'unknown':
+            return 'table-light';
+        case 'nff':
+            return 'table-success';
+        case 'vf':
+            return 'table-danger';
+        case 'vm/pps':
+            return 'table-warning';
+        case 'testing':
+            return 'table-info';
+        default:
+            return 'table-secondary';
+    }
+}
 </script>
