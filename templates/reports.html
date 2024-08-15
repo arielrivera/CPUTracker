@@ -41,8 +41,8 @@
                     <!-- Date code input -->
                     <div class="col-md-3 mb-3">
                         <label for="adv_dateCode">Date Code</label>
-                        <input type="text" class="form-control" id="adv_datecode" list="datecodeSuggestions">
-                        <datalist id="datecodeSuggestions">
+                        <input type="text" class="form-control" id="adv_datecode" list="adv_datecodeSuggestions">
+                        <datalist id="adv_datecodeSuggestions">
                             <!-- Suggestions will be populated dynamically -->
                         </datalist>
                     </div>
@@ -64,7 +64,7 @@
 
     <!-- Button options section -->
     <div id="buttonOptions" class="mb-4" style="display: none;">
-        <button class="btn btn-info" id="foxconnReportBtn">Foxcon Report</button>
+        <button class="btn btn-primary" id="foxconnReportBtn">Foxconn Report</button>
         <button class="btn btn-info">Export as CSV</button>
         <button class="btn btn-info">Export as HTML</button>
     </div>
@@ -173,30 +173,27 @@
         });
 
 
-
-
-
-            $('#buttonOptions').show();
+    $('#buttonOptions').show();
            
     
     
-        $('#dateRange').datepicker({ format: "yyyy-mm-dd" });
+    $('#dateRange').datepicker({ format: "yyyy-mm-dd" });
 
 
-        // Fetch datecode suggestions
-        function fetchDatecodeSuggestions(query) {
-            return $.ajax({
-                url: '/get_datecode_suggestions',
-                method: 'GET',
-                data: { query: query }
-            });
-        }
+    // Fetch datecode suggestions
+    function adv_fetchDatecodeSuggestions(query) {
+        return $.ajax({
+            url: '/get_datecode_suggestions',
+            method: 'GET',
+            data: { query: query }
+        });
+    }
 
         // Handle datecode input for suggestions
-        $('#datecode').on('input', function() {
+        $('#adv_datecode').on('input', function() {
                     const query = $(this).val();
-                    fetchDatecodeSuggestions(query).done(function(data) {
-                        const suggestions = $('#datecodeSuggestions');
+                    adv_fetchDatecodeSuggestions(query).done(function(data) {
+                        const suggestions = $('#adv_datecodeSuggestions');
                         suggestions.empty();
                         data.forEach(datecode => {
                             suggestions.append(new Option(datecode, datecode));
@@ -255,13 +252,33 @@
                 }
             });
 
-            // Copy the table to clipboard
+            // Wrap the table in basic HTML tags
+            // var tableContent = `
+            //     <!DOCTYPE html>
+            //     <html lang="en">
+            //     <head>
+            //         <meta charset="UTF-8">
+            //         <title>Foxconn Report</title>
+            //     </head>
+            //     <body>
+            //         ${$('#adv-search-results')[0].outerHTML}
+            //     </body>
+            //     </html>
+            // `;
+            // // Copy the table to clipboard
             var tableContent = $('#adv-search-results')[0].outerHTML;
-            navigator.clipboard.writeText(tableContent).then(function() {
+            var tempElement = $('<textarea>').val(tableContent).appendTo('body').select();
+            try {
+                document.execCommand('copy');
                 showAlert('Table copied to clipboard successfully!', 'alert-success');
-            }).catch(function() {
+            } catch (err) {
                 showAlert('Failed to copy table to clipboard.', 'alert-danger');
-            });
+            }
+            //     navigator.clipboard.writeText(tableContent).then(function() {
+            //     showAlert('Table copied to clipboard successfully!', 'alert-success');
+            // }).catch(function() {
+            //     showAlert('Failed to copy table to clipboard.', 'alert-danger');
+            // });
         });
 
         function showAlert(message, alertClass) {
