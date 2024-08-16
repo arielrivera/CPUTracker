@@ -155,3 +155,61 @@ Lets create functionality to the "Foxconn report" button as follows:
 -- If the value of the cell is Unknown, TESTING or anything else then we change the cell value to "Not tested" yet.
 
 Then we attempt to copy the whole results table to memory buffer so the user can paste it anywhere and notify the user if we were successful in copying the date to memory or not. Use the reports-alert-message div to show the success result or alert for failure respectively. This alert should be wiped and disapear after 5 secs
+
+---
+
+I need a shell script that reads a csv file taken as first argument, it will read it line by line , grabs the first line in a variable and moves to the next line, if the next line starts starts with a character that is not a number then it appends a space the line to the same variable and the nappends the line to the same variable too. THen it moves to the next line and repeats the process until it finds a line that starts with a number , if it finds a number it grabs the whole first word of the line and cheks if it contains two "/" , trying to find a date, if it doesn't seem like a date then it does the same again, it appends the line to the same variable; if it does look like a date then it prints the whole variable string, empties the variable and moves on to the next line and repeats again, any questions ?
+
+Let's break down the steps required for the shell script:
+
+Read the CSV file line by line.
+Initialize a variable to hold the concatenated lines.
+For each line:
+If the line starts with a non-numeric character, append it to the variable.
+If the line starts with a numeric character, check if it contains a date (i.e., two "/").
+If it looks like a date, print the concatenated variable, reset the variable, and start a new concatenation.
+If it doesn't look like a date, append it to the variable.
+Continue until the end of the file.
+Here's the shell script to achieve this:
+
+#!/bin/bash
+
+# Check if a file is provided
+
+if [ -z "$1" ]; then
+echo "Usage: $0 <csv_file>"
+exit 1
+fi
+
+csv_file="$1"
+concatenated_lines=""
+
+while IFS= read -r line; do # Check if the line starts with a numeric character
+if [[$line =~ ^[0-9]]]; then # Extract the first word of the line
+first_word=$(echo "$line" | awk '{print $1}')
+
+        # Check if the first word contains two "/"
+        if [[ $first_word =~ .*/.*/.* ]]; then
+            # Print the concatenated lines and reset the variable
+            echo "$concatenated_lines"
+            concatenated_lines=""
+        fi
+    fi
+
+    # Append the line to the concatenated variable
+    concatenated_lines+="$line "
+
+done < "$csv_file"
+
+# Print any remaining concatenated lines
+
+if [ -n "$concatenated_lines" ]; then
+echo "$concatenated_lines"
+fi
+
+Summary
+The script reads a CSV file line by line.
+It concatenates lines that start with non-numeric characters.
+It checks for dates in lines that start with numeric characters.
+It prints and resets the concatenated variable when a date is found.
+It handles the end of the file by printing any remaining concatenated lines.
