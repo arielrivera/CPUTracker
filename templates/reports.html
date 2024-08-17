@@ -8,10 +8,22 @@
             <form id="advancedSearchForm">
                 <div class="form-row">
                     <!-- Date or date range selection control -->
-                    <div class="col-md-3 mb-3">
+                    <!-- <div class="col-md-3 mb-3">
                         <label for="dateRange">Date Range</label>
                         <input type="text" class="form-control" id="dateRange" name="dateRange" placeholder="Select date" data-date-format="yyyy-mm-dd">
-                    </div>
+                    </div> -->
+
+                 <!-- Date range selection  -->
+                 <div class="col-md-3 mb-3">
+                    <label for="startDate">Start Date</label>
+                    <input type="text" class="form-control" id="startDate" name="startDate" placeholder="Select start date" data-date-format="yyyy-mm-dd">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="endDate">End Date</label>
+                    <input type="text" class="form-control" id="endDate" name="endDate" placeholder="Select end date" data-date-format="yyyy-mm-dd">
+                </div>
+                    
+
                     <!-- Part number dropdown -->
                     <div class="col-md-3 mb-3">
                         <label for="adv_partNumber">Part Number</label>
@@ -95,23 +107,30 @@
 <script>
     $(document).ready(function() {
         // Initialize the datepicker
-        $('#dateRange').datepicker({
-            format: 'yyyy-mm-dd',
-            todayHighlight: true,
-            autoclose: true,
-            clearBtn: true
+        // $('#dateRange').datepicker({
+        //     format: 'yyyy-mm-dd',
+        //     todayHighlight: true,
+        //     autoclose: true,
+        //     clearBtn: true
+        // });
+
+        $(function() {
+            $('#startDate').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true
+            });
+            $('#endDate').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true
+            });
         });
 
         $('#advancedSearchForm').on('submit', function(event) {
             event.preventDefault();
 
-            console.log('Report submit Button clicked' + $('#dateRange').val());
-            
-            // Retrieve the values from the input fields
-            let dateRangeValue = $('#dateRange').val();
-            // console.log('Original Date Range:', dateRangeValue);
-            // let dateParts = dateRangeValue.split('/'); // Assuming the format is mm/dd/yyyy
-            // let formattedDate = `${dateParts[2]}-${dateParts[0]}-${dateParts[1]}`;
+            let startDateValue = $('#startDate').val();
+            let endDateValue = $('#endDate').val();
+
             let partNumberValue = $('#adv_partNumber').val();
             let resultValue = $('#adv_result').val();
             let dateCodeValue = $('#adv_datecode').val();
@@ -121,7 +140,8 @@
                 url: '/advanced_search',
                 method: 'POST',
                 data: {
-                    date_range: dateRangeValue,
+                    start_date: startDateValue,
+                    end_date: endDateValue,                    
                     part_number: partNumberValue,
                     test_result: resultValue,
                     datecode: dateCodeValue,

@@ -184,7 +184,8 @@ def search():
 
 @app.route('/advanced_search', methods=['POST'])
 def advanced_search():
-    date_range = request.form.get ('date_range')
+    start_date = request.form.get ('start_date')
+    end_date = request.form.get('end_date')
     part_number = request.form.get('part_number')
     test_result = request.form.get('test_result')
     datecode = request.form.get('datecode')
@@ -198,9 +199,9 @@ def advanced_search():
     #     query += " AND date BETWEEN ? AND ?"
     #     params.extend([start_date, end_date])
 
-    if date_range:
-        query += " AND date_added = ?"
-        params.append(date_range)
+    if start_date and end_date:
+        query += " AND date_added BETWEEN ? AND ?"
+        params.extend([start_date, end_date])
 
     if part_number and part_number != 'any':
         query += " AND part_number = ?"
@@ -218,7 +219,7 @@ def advanced_search():
         query += " AND raw_failure LIKE ?"
         params.append(f"%{raw_failure}%")
 
-    print(params)
+    # print(query)
     conn = get_db()
     results = conn.execute(query, params).fetchall()
     conn.close()
