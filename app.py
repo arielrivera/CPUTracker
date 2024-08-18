@@ -74,15 +74,28 @@ def logs():
 @app.route('/get_logs_records', methods=['GET'])
 def get_logs_records():
     records_per_page = request.args.get('recordsPerPage', '10')
+    serial = request.args.get('serial', '')
+    query_sn = ""
+
+    if serial != '':
+        query_sn += " WHERE serial_number = ?"
+        params = [serial]
+    else:
+        query_sn = ""
+        params = []
+
+
+    
     db = get_db()
     
     if records_per_page == 'all':
-        query = 'SELECT id, file_name, serial_number, host_status, csv_file_name, csv_file_content FROM LOGS ORDER BY id DESC'
-        records = db.execute(query).fetchall()
+        query = f'SELECT id, file_name, serial_number, host_status, csv_file_name, csv_file_content FROM LOGS {query_sn} ORDER BY id DESC'
+        records = db.execute(query, params).fetchall()
     else:
         records_per_page = int(records_per_page)
-        query = 'SELECT id, file_name, serial_number, host_status, csv_file_name, csv_file_content FROM LOGS ORDER BY id DESC LIMIT ?'
-        records = db.execute(query, (records_per_page,)).fetchall()
+        query = f'SELECT id, file_name, serial_number, host_status, csv_file_name, csv_file_content FROM LOGS {query_sn} ORDER BY id DESC LIMIT ?'
+        params.append(records_per_page)
+        records = db.execute(query, params).fetchall()
     
     db.close()
     

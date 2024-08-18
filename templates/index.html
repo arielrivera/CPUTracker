@@ -171,8 +171,37 @@
                 white-space: pre-wrap; /* This ensures that the text wraps and preserves newlines */
             }
         </style>
+    <style>
+    /*For the results column in home tempalte
+     Hide the icon by default */
+    .result-icon {
+        display: none;
+        cursor: pointer;
+    }
     
+    /* Show the icon when hovering over the cell */
+    .result-cell:hover .result-icon {
+        display: inline;
+    }
 
+    /* Next four for host_status contents modal height */
+    .custom-modal-height {
+        height: 80vh; /* Adjust the height as needed */
+    }
+
+    .custom-modal-height .modal-content {
+        height: 100%;
+    }
+
+    .custom-modal-height .modal-body {
+        height: calc(100% - 56px - 56px); /* Adjust for header and footer height */
+        overflow-y: auto;
+    }
+    .custom-modal-background {
+    background-color: lightgrey; /* Change background color to light grey */
+}
+
+    </style>
 </head>
 <body>
     <div class="container-fluid">

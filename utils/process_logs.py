@@ -2,7 +2,7 @@ import os
 import shutil
 import sqlite3
 import py7zr
-from datetime import datetime
+import datetime
 
 # Global variable to ensure the process runs only once
 process_running = False
@@ -12,6 +12,13 @@ def get_db():
     db.row_factory = sqlite3.Row  # This allows us to access columns by name
     return db
 
+def file_exists(file_name, db_conn):
+    cursor = db_conn.cursor()
+    cursor.execute("SELECT COUNT(1) FROM LOGS WHERE file_name = ?", (file_name,))
+    exists = cursor.fetchone()[0] > 0
+    cursor.close()
+    return exists
+
 def get_serial_number(file_name):
     parts = file_name.split('_')
     if len(parts) > 2:
@@ -20,6 +27,9 @@ def get_serial_number(file_name):
 
 def process_file(file_path, temp_folder, db_conn):
     file_name = os.path.basename(file_path)
+    print(f"Working with file: {file_name}")
+    if(file_exists(file_name, db_conn)):
+        return f"File {file_name} already processed."
     serial_number = get_serial_number(file_name)
     if not serial_number:
         return "Invalid file name format."
@@ -94,7 +104,7 @@ def process_logs(mode):
 
     for file in files:
         result = process_file(file, temp_folder, db_conn)
-        print(result)  # This would be sent to the web interface in a real application
+        print(result)  
 
     process_running = False
     return "Process completed."
