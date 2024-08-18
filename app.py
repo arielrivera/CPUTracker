@@ -1,8 +1,10 @@
 from flask import Flask, g, request, render_template, Response, jsonify, session, redirect, url_for, make_response, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3 , os, shutil, sqlite3, py7zr
+import sqlite3 , os, shutil, sqlite3, py7zr, sys
 from flask_bootstrap import Bootstrap
 from datetime import datetime
+sys.path.append('./utils')
+from utils.process_logs import start_process, stop_process
 
 app = Flask(__name__)
 app.secret_key = 'AMD'
@@ -67,6 +69,27 @@ def get_records():
 @app.route('/logs')
 def logs():
     return render_template('logs.html')
+
+
+@app.route('/get_logs_records', methods=['GET'])
+def get_logs_records():
+    records_per_page = request.args.get('recordsPerPage', '10')
+    db = get_db()
+    
+    if records_per_page == 'all':
+        query = 'SELECT id, file_name, serial_number, host_status, csv_file_name, csv_file_content FROM LOGS ORDER BY id DESC'
+        records = db.execute(query).fetchall()
+    else:
+        records_per_page = int(records_per_page)
+        query = 'SELECT id, file_name, serial_number, host_status, csv_file_name, csv_file_content FROM LOGS ORDER BY id DESC LIMIT ?'
+        records = db.execute(query, (records_per_page,)).fetchall()
+    
+    db.close()
+    
+    # Convert records to a list of dictionaries
+    records_list = [dict(record) for record in records]
+    
+    return jsonify({'records': records_list})
 
 
 @app.route('/settings')
@@ -491,27 +514,24 @@ def process_logs(mode):
 #         process_logs()
 
 # ---------
+
 @app.route('/start_process', methods=['POST'])
 def start_process_route():
-    global process_running
-    if not process_running:
-        process_running = True
-        mode = request.json.get('mode', 'new-files')
-        run_process_logs_in_context(mode)
-    return jsonify({"message": "Process started in route /start_process"})
-
+    data = request.get_json()
+    mode = data.get('mode', 'new-files')
+    result = start_process(mode)
+    return jsonify({'message': result})
 
 @app.route('/stop_process', methods=['POST'])
-def stop_process():
-    global process_running
-    process_running = False
-    return jsonify({"message": "Process stopped"})
+def stop_process_route():
+    stop_process()
+    return jsonify({'message': 'Process stopped.'})
 
 
-def run_process_logs_in_context(mode):
-    write_to_audit('Within run_process_logs_in_context', '7zlogfiles')
-    with app.app_context():
-        process_logs(mode)
+# def run_process_logs_in_context(mode):
+#     write_to_audit('Within run_process_logs_in_context', '7zlogfiles')
+#     with app.app_context():
+#         process_logs(mode)
         
 # --------- LOGS AREA END
 

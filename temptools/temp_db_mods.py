@@ -20,7 +20,7 @@ cursor = conn.cursor()
 
 # # Commit the changes
 # conn.commit()
-
+#  cursor.execute('ALTER TABLE LOGS ADD TO AUDIT;')
 # cursor.execute('ALTER TABLE AUDITNEW RENAME TO AUDIT;')
 
 # Commit the changes
@@ -199,10 +199,31 @@ cursor = conn.cursor()
 #         print('\n'+statement.strip())
 #         cursor.execute(statement.strip())
 
-cursor.execute('PRAGMA table_info(units);')
-rows = cursor.fetchall()
-for row in rows:
-    print(row)
+# # Create the LOGS table
+# cursor.execute('''
+#     CREATE TABLE IF NOT EXISTS LOGS (
+#         id INTEGER PRIMARY KEY AUTOINCREMENT,
+#         file_name VARCHAR(100),
+#         serial_number VARCHAR(20) NOT NULL,
+#         host_status TEXT,
+#         csv_file_name VARCHAR(255),
+#         csv_file_content TEXT
+#     );
+# ''')
+# conn.commit()
+
+# cursor.execute('PRAGMA table_info(LOGS);')
+# rows = cursor.fetchall()
+# for row in rows:
+#     print(row)
+
+# cursor.execute('SELECT * FROM LOGS;')
+# rows = cursor.fetchall()
+# for row in rows:
+#     print(row)
+
+
+cursor.execute('ALTER TABLE LOGS ADD COLUMN date_added DATETIME DEFAULT CURRENT_TIMESTAMP');
 
 conn.commit()
 

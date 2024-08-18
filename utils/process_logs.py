@@ -1,21 +1,16 @@
 import os
 import shutil
 import sqlite3
-import subprocess
-import threading
 import py7zr
 from datetime import datetime
-from flask import Flask, g
-
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect('cputracker.db')
-        db.row_factory = sqlite3.Row  # This allows us to access columns by name
-    return db
 
 # Global variable to ensure the process runs only once
 process_running = False
+
+def get_db():
+    db = sqlite3.connect('cputracker.db')
+    db.row_factory = sqlite3.Row  # This allows us to access columns by name
+    return db
 
 def get_serial_number(file_name):
     parts = file_name.split('_')
@@ -36,7 +31,7 @@ def process_file(file_path, temp_folder, db_conn):
     try:
         with py7zr.SevenZipFile(temp_file_path, mode='r') as archive:
             archive.extractall(path=temp_folder)
-        print(f"Extraction of {file} completed successfully.")
+        print(f"Extraction of {file_name} completed successfully.")
     except FileNotFoundError:
         print(f"Error: File {temp_file_path} not found.")
     except py7zr.exceptions.Bad7zFile:
@@ -63,10 +58,12 @@ def process_file(file_path, temp_folder, db_conn):
 
     # Store data in the database
     cursor = db_conn.cursor()
+    current_timestamp = datetime.datetime.now()
     cursor.execute("""
-            INSERT INTO LOGS (file_name, serial_number, host_status, csv_file_name, csv_file_content) 
-            VALUES (?, ?, ?, ?, ?)
-        """, ('example.7z', '12345', 'active', 'example.csv', 'csv content here'))
+    INSERT INTO LOGS (file_name, serial_number, host_status, csv_file_name, csv_file_content, date_added) 
+    VALUES (?, ?, ?, ?, ?, ?)
+""", (file_name, serial_number, host_status, csv_file_name, csv_file_content, current_timestamp))
+
     db_conn.commit()
 
     # Clean up temp folder
@@ -103,8 +100,12 @@ def process_logs(mode):
     return "Process completed."
 
 def start_process(mode):
-    threading.Thread(target=process_logs, args=(mode,)).start()
+    print('Starting process...')
+    process_logs(mode)
 
 def stop_process():
     global process_running
     process_running = False
+
+if __name__ == '__main__':
+    start_process("new-files")
