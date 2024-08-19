@@ -103,6 +103,7 @@ def process_logs(mode):
         files.sort(key=lambda x: os.path.getctime(x))
 
     for file in files:
+        print("\nProcessing file: ", file)
         result = process_file(file, temp_folder, db_conn)
         print(result)  
 

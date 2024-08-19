@@ -10,17 +10,13 @@ docker container rm cputrackerapp
 set DATABASE_PATH=%cd%\cputracker.db
 
 :: Define the path to the folder you want to link to
-set TARGET_FOLDER=%USERPROFILE%\Documents\tester_logs
-set LINK_NAME=LOGS_FOLDER
-
-:: Create a symbolic link in the current folder
-mklink /J "%LINK_NAME%" "%TARGET_FOLDER%"
+set TARGET_FOLDER=C:\Users\OSVHo\OneDrive - Triple Crown AES\Documents\OSV Template\Processed
 
 :: Remove all images
 docker rmi cputrackerapp_image
 docker build -t cputrackerapp_image .
 
 :: Start the container
-docker run --name cputrackerapp -v "%DATABASE_PATH%:/app/cputracker.db" -v "%cd%\%LINK_NAME%:/app/logs_folder" -p 5001:5001 cputrackerapp_image
+docker run --name cputrackerapp -v "%DATABASE_PATH%:/app/cputracker.db" -v "%TARGET_FOLDER%:/app/logs_folder" -p 5001:5001 cputrackerapp_image
 
 @echo on
