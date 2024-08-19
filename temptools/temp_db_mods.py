@@ -212,10 +212,10 @@ cursor = conn.cursor()
 # ''')
 # conn.commit()
 
-# cursor.execute('PRAGMA table_info(LOGS);')
-# rows = cursor.fetchall()
-# for row in rows:
-#     print(row)
+cursor.execute('PRAGMA table_info(LOGS);')
+rows = cursor.fetchall()
+for row in rows:
+    print(row)
 
 # cursor.execute('SELECT * FROM LOGS;')
 # rows = cursor.fetchall()
@@ -223,9 +223,9 @@ cursor = conn.cursor()
 #     print(row)
 
 
-cursor.execute('ALTER TABLE LOGS ADD COLUMN date_added DATETIME DEFAULT CURRENT_TIMESTAMP');
+# cursor.execute('ALTER TABLE LOGS ADD COLUMN date_added DATETIME DEFAULT CURRENT_TIMESTAMP');
 
-conn.commit()
+# conn.commit()
 
 
 conn.close()
