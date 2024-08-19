@@ -107,7 +107,65 @@ def get_logs_records():
 
 @app.route('/settings')
 def settings():
-    return render_template('settings.html')
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Retrieve user data
+        cursor.execute("SELECT id, username, enabled, is_admin FROM users")
+        users = cursor.fetchall()
+
+        # Close the connection
+        conn.close()
+
+        # Convert user data to a list of dictionaries
+        users_list = []
+        for user in users:
+            users_list.append({
+                'id': user[0],
+                'username': user[1],
+                'enabled': user[2],
+                'is_admin': user[3]
+            })
+
+         # Define context variables
+        db_info = {
+            'name': 'cputracker.db',
+            'size': os.path.getsize('cputracker.db')
+        }
+        logs_folder = '/logs_folder'
+
+        # Render the template with user data and context variables
+        return render_template('settings.html', users=users_list, db_info=db_info, logs_folder=logs_folder)
+
+
+    except Exception as e:
+        # Handle any errors
+        return str(e), 500
+
+@app.route('/delete_user', methods=['POST'])
+def delete_user():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Delete the user
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
+        # Commit the changes and close the connection
+        conn.commit()
+        conn.close()
+
+        # Return a JSON response
+        return jsonify({'success': True})
+
+    except Exception as e:
+        # Handle any errors
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -576,6 +634,40 @@ def delete_record_from_database(record_id):
     finally:
         # Close the connection
         conn.close()
+
+
+@app.route('/save_users', methods=['POST'])
+def save_users():
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Extract form data
+        form_data = request.form
+
+        # Iterate over the form data and update the database
+        for key, value in form_data.items():
+            if key.startswith('enabled_'):
+                user_id = key.split('_')[1]
+                enabled = 1 if value == 'on' else 0
+                cursor.execute("UPDATE users SET enabled = ? WHERE id = ?", (enabled, user_id))
+            elif key.startswith('is_admin_'):
+                user_id = key.split('_')[1]
+                is_admin = 1 if value == 'on' else 0
+                cursor.execute("UPDATE users SET is_admin = ? WHERE id = ?", (is_admin, user_id))
+
+        # Commit the changes and close the connection
+        conn.commit()
+        conn.close()
+
+        # Return a success response
+        return jsonify({'message': 'User settings saved successfully.'})
+
+    except Exception as e:
+        # Handle any errors and return a failure response
+        return jsonify({'message': 'Error saving user settings: ' + str(e)}), 500
+
+
 
 app.jinja_env.add_extension('jinja2.ext.do')
 

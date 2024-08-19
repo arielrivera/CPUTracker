@@ -878,7 +878,11 @@ function setMode(mode) {
     function showHostStatusModal(fileName, hostStatus) {
         document.getElementById('hostStatusModalLabel').innerText = fileName;
         document.getElementById('hostStatusContent').value = hostStatus;
-        $('#hostStatusModal').modal('show'); 
+        
+        $('#hostStatusModal').modal('show');
+        const hostStatusContent = document.getElementById('hostStatusContent');
+        hostStatusContent.scrollTop = hostStatusContent.scrollHeight;
+ 
     }
 
     

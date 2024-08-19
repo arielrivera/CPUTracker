@@ -212,7 +212,7 @@ cursor = conn.cursor()
 # ''')
 # conn.commit()
 
-cursor.execute('PRAGMA table_info(LOGS);')
+cursor.execute('PRAGMA table_info(users);')
 rows = cursor.fetchall()
 for row in rows:
     print(row)
@@ -223,14 +223,14 @@ for row in rows:
 #     print(row)
 
 
-cursor.execute('ALTER TABLE LOGS ADD COLUMN date_added DATETIME');
+# cursor.execute('ALTER TABLE LOGS ADD COLUMN date_added DATETIME');
 
-cursor.execute('PRAGMA table_info(LOGS);')
-rows = cursor.fetchall()
-for row in rows:
-    print(row)
+# cursor.execute('PRAGMA table_info(LOGS);')
+# rows = cursor.fetchall()
+# for row in rows:
+#     print(row)
 
-conn.commit()
+# conn.commit()
 
 
 conn.close()
