@@ -212,10 +212,10 @@ cursor = conn.cursor()
 # ''')
 # conn.commit()
 
-cursor.execute('PRAGMA table_info(users);')
-rows = cursor.fetchall()
-for row in rows:
-    print(row)
+# cursor.execute('PRAGMA table_info(users);')
+# rows = cursor.fetchall()
+# for row in rows:
+#     print(row)
 
 # cursor.execute('SELECT * FROM LOGS;')
 # rows = cursor.fetchall()
@@ -231,6 +231,43 @@ for row in rows:
 #     print(row)
 
 # conn.commit()
+
+
+# # Execute the query
+# cursor.execute('''
+#     SELECT 
+#         name AS table_name,
+#         SUM(pgsize) AS size
+#     FROM 
+#         dbstat
+#     GROUP BY 
+#         name
+#     ORDER BY 
+#         size DESC;
+# ''')
+
+# # Fetch and print the results
+# for row in cursor.fetchall():
+#     print(f"Table: {row[0]}, Size: {row[1]} bytes")
+
+sql_script ='''
+DELETE FROM LOGS WHERE serial_number='9KQ4574X20182';
+DELETE FROM LOGS WHERE serial_number='9ABH752W30024';
+DELETE FROM LOGS WHERE serial_number='9KQ5018X20130';
+DELETE FROM LOGS WHERE serial_number='9ABH752W30024';
+DELETE FROM LOGS WHERE serial_number='9MF6672Q40042';
+DELETE FROM LOGS WHERE serial_number='9JT6721U10002';
+DELETE FROM LOGS WHERE serial_number='9LN1136S20020';
+DELETE FROM LOGS WHERE serial_number='9MC9711P40038';
+'''
+
+statements = sql_script.strip().split(';')
+
+# Execute each statement
+for statement in statements:
+    if statement.strip():
+        print('\n'+statement.strip())
+        cursor.execute(statement.strip())
 
 
 conn.close()

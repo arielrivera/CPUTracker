@@ -3,6 +3,7 @@ import shutil
 import sqlite3
 import py7zr
 import datetime
+import zlib
 
 # Define a writable directory
 WRITABLE_TEMP_DIR = '/tmp/cputracker_temp'
@@ -28,6 +29,9 @@ def get_serial_number(file_name):
     if len(parts) > 2:
         return parts[1]
     return None
+
+def compress_text(text):
+    return zlib.compress(text.encode('utf-8'))
 
 def process_file(file_path, temp_folder, db_conn):
     file_name = os.path.basename(file_path)
@@ -63,6 +67,8 @@ def process_file(file_path, temp_folder, db_conn):
     if os.path.exists(host_status_path):
         with open(host_status_path, 'r') as file:
             host_status = file.read()
+        print(f"\nCompressing text before inserting into db\n")
+        host_status = compress_text(host_status)
 
     # Read CSV file
     csv_file_name = None
@@ -72,6 +78,8 @@ def process_file(file_path, temp_folder, db_conn):
             csv_file_name = file
             with open(os.path.join(temp_folder, file), 'r') as csv_file:
                 csv_file_content = csv_file.read()
+                print(f"\nCompressing text before inserting into db\n")
+                csv_file_content = compress_text(csv_file_content)
             break
 
     # Store data in the database
