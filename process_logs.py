@@ -3,7 +3,7 @@ import shutil
 import sqlite3
 import py7zr
 import datetime
-import zlib
+# import zlib
 
 # Define a writable directory
 WRITABLE_TEMP_DIR = '/tmp/cputracker_temp'
@@ -30,8 +30,8 @@ def get_serial_number(file_name):
         return parts[1]
     return None
 
-def compress_text(text):
-    return zlib.compress(text.encode('utf-8'))
+# def compress_text(text):
+#     return zlib.compress(text.encode('utf-8'))
 
 def process_file(file_path, temp_folder, db_conn):
     file_name = os.path.basename(file_path)
@@ -67,19 +67,29 @@ def process_file(file_path, temp_folder, db_conn):
     if os.path.exists(host_status_path):
         with open(host_status_path, 'r') as file:
             host_status = file.read()
-        print(f"\nCompressing text before inserting into db\n")
-        host_status = compress_text(host_status)
+        # print(f"\nCompressing text before inserting into db\n")
+        # host_status = compress_text(host_status)
 
     # Read CSV file
     csv_file_name = None
     csv_file_content = None
+    lkt_datetime = None
     for file in os.listdir(temp_folder):
         if file.startswith(serial_number) and file.endswith('.csv'):
             csv_file_name = file
             with open(os.path.join(temp_folder, file), 'r') as csv_file:
                 csv_file_content = csv_file.read()
-                print(f"\nCompressing text before inserting into db\n")
-                csv_file_content = compress_text(csv_file_content)
+                # print(f"\nCompressing text before inserting into db\n")
+                # csv_file_content = compress_text(csv_file_content)
+                # Extract date and time from the file name
+        
+            # Extract datetime assuming format is 100-000000933_9LN1136S20020_999999_AMD-HC-OSV-HTX0_SCR_YYYYMMDD_HHMMSS.7z
+            date_time_str = file.split('_')[-2] + file.split('_')[-1].split('.')[0]  # Correct extraction
+            lkt_datetime = datetime.datetime.strptime(date_time_str, '%Y%m%d%H%M%S')            
+            print(f"lkt_datetime: {lkt_datetime}")
+            # Update the lkt_datetime field in the UNITS table
+            if lkt_datetime:
+                update_lkt_datetime(db_conn, serial_number, lkt_datetime)
             break
 
     # Store data in the database
@@ -135,6 +145,16 @@ def start_process(mode):
 def stop_process():
     global process_running
     process_running = False
+
+
+def update_lkt_datetime(db_conn, serial_number, lkt_datetime):
+    cursor = db_conn.cursor()
+    cursor.execute("""
+        UPDATE UNITS
+        SET lkt_datetime = ?
+        WHERE serial_number = ?
+    """, (lkt_datetime, serial_number))
+    db_conn.commit()
 
 if __name__ == '__main__':
     start_process("new-files")

@@ -29,7 +29,8 @@ cursor.execute('''
         composite_snpn VARCHAR(30),
         test_result VARCHAR(10) DEFAULT 'Unknown',
         raw_failure VARCHAR(150),
-        user_id INTEGER
+        user_id INTEGER,
+        lkt_datetime DATETIME
     );
 ''')
 

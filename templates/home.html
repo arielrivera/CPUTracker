@@ -84,6 +84,7 @@
                 <th data-column="country">Country</th>
                 <th class="raw-failure-column" data-column="raw_failure">Raw Failure</th>
                 <th data-column="test_result">Result</th>
+                <th data-column="lkt">Last Known Test</th>
             </tr>
         </thead>
         <tbody>
@@ -98,6 +99,7 @@
                     <td class="raw-failure-column">
                         <span class="cell-content">{{ unit.raw_failure }}</span></td>
                     <td class="result-cell" rescell_sn="{{ unit.serial_number }}">{{ unit.test_result }} <img class="result-icon" src="static/alert-circle.svg" alt="Alert Icon" width="15" height="15"></td>
+                    <td>{{ unit.lkt_datetime }}</td>
                 </tr>
                 {% endfor %}
             {% else %}
@@ -400,6 +402,8 @@ function setMode(mode) {
 
                         // Populate the table with the fetched data
                         data.records.forEach(record => {
+                            // Handle ugly nulls 
+                            let lktDatetime = record.lkt_datetime ? record.lkt_datetime : '';
                             $('#home_results_table tbody').append(`
                                 <tr comp_snpn="${record.composite_snpn}" record_id="${record.id}" class="${getRowClass(record.test_result)}">
                                     <td class="text-nowrap">${record.date_added}</td>
@@ -409,6 +413,7 @@ function setMode(mode) {
                                     <td>${record.country}</td>
                                     <td class="raw-failure-column"><span class="cell-content">${record.raw_failure}</span></td>
                                     <td class="result-cell" rescell_sn="${record.serial_number}">${record.test_result} <img class="result-icon" src="static/alert-circle.svg" alt="Alert Icon" width="15" height="15"></td>
+                                    <td>${lktDatetime}</td>
                                 </tr>
                             `);
                             toggleRawFailureColumn('');

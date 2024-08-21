@@ -52,11 +52,11 @@ def get_records():
     db = get_db()
     
     if records_per_page == 'all':
-        query = 'SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn, raw_failure FROM UNITS ORDER BY date_added DESC'
+        query = 'SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn, raw_failure, lkt_datetime FROM UNITS ORDER BY date_added DESC'
         records = db.execute(query).fetchall()
     else:
         records_per_page = int(records_per_page)
-        query = 'SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn, raw_failure FROM UNITS ORDER BY date_added DESC LIMIT ?'
+        query = 'SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn, raw_failure, lkt_datetime FROM UNITS ORDER BY date_added DESC LIMIT ?'
         records = db.execute(query, (records_per_page,)).fetchall()
     
     db.close()
@@ -70,8 +70,8 @@ def get_records():
 def logs():
     return render_template('logs.html')
 
-def decompress_text(compressed_text):
-    return zlib.decompress(compressed_text).decode('utf-8')
+# def decompress_text(compressed_text):
+#     return zlib.decompress(compressed_text).decode('utf-8')
 
 
 @app.route('/get_logs_records', methods=['GET'])
@@ -100,20 +100,10 @@ def get_logs_records():
     
     db.close()
 
-    # Decompress the text fields
-    decompressed_records = []
-    for record in records:
-        decompressed_record = list(record)
-        decompressed_record[3] = decompress_text(record[3])  # Decompress host_status
-        decompressed_record[5] = decompress_text(record[5])  # Decompress csv_file_content
-        decompressed_records.append(tuple(decompressed_record))
-            
-    # Define the keys for the dictionary
-    keys = ['id', 'file_name', 'serial_number','host_status', 'csv_file_name', 'csv_file_content']
+    keys = ['id', 'file_name', 'serial_number', 'host_status', 'csv_file_name', 'csv_file_content']
 
-    # Convert records to a list of dictionaries and ensure all fields are JSON serializable
     records_list = []
-    for record in decompressed_records:
+    for record in records:
         record_dict = dict(zip(keys, record))
         for key, value in record_dict.items():
             if isinstance(value, bytes):
@@ -259,10 +249,10 @@ def search():
 
     # Construct the SQL query
     if part_number.lower() == 'any':
-        query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn,raw_failure FROM UNITS WHERE serial_number LIKE ?"
+        query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn,raw_failure,lkt_datetime FROM UNITS WHERE serial_number LIKE ?"
         params = (search_box + '%',)
     else:
-        query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn,raw_failure FROM UNITS WHERE serial_number LIKE ? AND part_number = ?"
+        query = "SELECT id, date_added, serial_number, part_number, datecode, country, test_result, composite_snpn,raw_failure,lkt_datetime FROM UNITS WHERE serial_number LIKE ? AND part_number = ?"
         params = (search_box + '%', part_number)
 
     # print(query)
@@ -302,6 +292,8 @@ def advanced_search():
     test_result = request.form.get('test_result')
     datecode = request.form.get('datecode')
     raw_failure = request.form.get('raw_failure')
+    # host_status = request.form.get('host_status')
+    lkt_datetime = request.form.get('lkt_datetime')   
 
     query = "SELECT * FROM UNITS WHERE 1=1"
     params = []
@@ -330,6 +322,14 @@ def advanced_search():
     if raw_failure:
         query += " AND raw_failure LIKE ?"
         params.append(f"%{raw_failure}%")
+
+    # if host_status:
+    #     query += " AND host_status LIKE ?"
+    #     params.append(f"%{host_status}%")
+
+    if lkt_datetime:
+        query += " AND DATE(lkt_datetime) = DATE(?)"
+        params.append(lkt_datetime)
 
     # print(query)
     conn = get_db()

@@ -96,6 +96,12 @@ cursor = conn.cursor()
 # for row in rows:
 #     print(row)
 
+cursor.execute("DELETE FROM LOGS")
+conn.commit()
+cursor.execute("VACUUM")
+conn.commit()
+cursor.execute("DELETE FROM sqlite_sequence WHERE name='LOGS'")
+conn.commit()
 
 
 # cursor.execute('PRAGMA table_info(users);')
@@ -250,24 +256,26 @@ cursor = conn.cursor()
 # for row in cursor.fetchall():
 #     print(f"Table: {row[0]}, Size: {row[1]} bytes")
 
-sql_script ='''
-DELETE FROM LOGS WHERE serial_number='9KQ4574X20182';
-DELETE FROM LOGS WHERE serial_number='9ABH752W30024';
-DELETE FROM LOGS WHERE serial_number='9KQ5018X20130';
-DELETE FROM LOGS WHERE serial_number='9ABH752W30024';
-DELETE FROM LOGS WHERE serial_number='9MF6672Q40042';
-DELETE FROM LOGS WHERE serial_number='9JT6721U10002';
-DELETE FROM LOGS WHERE serial_number='9LN1136S20020';
-DELETE FROM LOGS WHERE serial_number='9MC9711P40038';
-'''
 
-statements = sql_script.strip().split(';')
 
-# Execute each statement
-for statement in statements:
-    if statement.strip():
-        print('\n'+statement.strip())
-        cursor.execute(statement.strip())
+# sql_script ='''
+# DELETE FROM LOGS WHERE serial_number='9KQ4574X20182';
+# DELETE FROM LOGS WHERE serial_number='9ABH752W30024';
+# DELETE FROM LOGS WHERE serial_number='9KQ5018X20130';
+# DELETE FROM LOGS WHERE serial_number='9ABH752W30024';
+# DELETE FROM LOGS WHERE serial_number='9MF6672Q40042';
+# DELETE FROM LOGS WHERE serial_number='9JT6721U10002';
+# DELETE FROM LOGS WHERE serial_number='9LN1136S20020';
+# DELETE FROM LOGS WHERE serial_number='9MC9711P40038';
+# '''
+
+# statements = sql_script.strip().split(';')
+
+# # Execute each statement
+# for statement in statements:
+#     if statement.strip():
+#         print('\n'+statement.strip())
+#         cursor.execute(statement.strip())
 
 
 conn.close()

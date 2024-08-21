@@ -51,7 +51,7 @@
                     <!-- Date code input -->
                     <div class="col-md-3 mb-3">
                         <label for="adv_dateCode">Date Code</label>
-                        <input type="text" class="form-control" id="adv_datecode" list="adv_datecodeSuggestions">
+                        <input type="text" class="form-control" id="adv_datecode" list="adv_datecodeSuggestions" placeholder="Keyword">
                         <datalist id="adv_datecodeSuggestions">
                             <!-- Suggestions will be populated dynamically -->
                         </datalist>
@@ -59,8 +59,18 @@
                     <!-- Raw Failure contains input -->
                     <div class="col-md-3 mb-3">
                         <label for="adv_rawFailure">Raw Failure Contains</label>
-                        <input type="text" class="form-control" id="adv_rawFailure" name="rawFailure" placeholder="Enter Raw Failure">
+                        <input type="text" class="form-control" id="adv_rawFailure" name="rawFailure" placeholder="Keyword">
                     </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="lkt_datepicker">Last Known Test Datetime(from logs)</label>
+                        <input type="text" class="form-control" id="lkt_datepicker" name="lkt_datepicker" placeholder="Select end date" data-date-format="YYYY-MM-DD">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="adv_hostStatus">Host Status file contains</label>
+                        <input type="text" class="form-control" id="adv_hostStatus" name="host_status" placeholder="Keyword" disabled>
+                    </div>
+
+
                 </div>
                 <button type="button" class="btn btn-secondary mr-2" onclick="document.getElementById('advancedSearchForm').reset();$('#buttonOptions').hide();">Reset form</button>
                 <button type="submit" class="btn btn-primary float-right" id="reportSubmit">Submit</button>
@@ -92,7 +102,7 @@
                     <th>Country</th>
                     <th>Raw Failure</th>
                     <th>Result</th>
-                    <!-- Add more columns as needed -->
+                    <th>Last Known Test Datetime</th>
                 </tr>
             </thead>
             <tbody>
@@ -123,6 +133,10 @@
                 $('#endDate').datepicker('update', e.date);
             });
             $('#endDate').datepicker({
+                format: 'yyyy-mm-dd ',
+                autoclose: true
+            });
+            $('#lkt_datepicker').datepicker({
                 format: 'yyyy-mm-dd',
                 autoclose: true
             });
@@ -133,11 +147,13 @@
 
             let startDateValue = $('#startDate').val();
             let endDateValue = $('#endDate').val();
+            let lktDateTimeValue = $('#lkt_datepicker').val();
 
             let partNumberValue = $('#adv_partNumber').val();
             let resultValue = $('#adv_result').val();
             let dateCodeValue = $('#adv_datecode').val();
             let rawFailureValue = $('#adv_rawFailure').val();
+            let hostStatusValue = $('#adv_hostStatus').val();
 
             $.ajax({
                 url: '/advanced_search',
@@ -148,7 +164,9 @@
                     part_number: partNumberValue,
                     test_result: resultValue,
                     datecode: dateCodeValue,
-                    raw_failure: rawFailureValue
+                    raw_failure: rawFailureValue,
+                    host_status: hostStatusValue,
+                    lkt_datetime: lktDateTimeValue
                 },
                 success: function(response) {
                     // Handle the response
@@ -172,6 +190,7 @@
                                     '<td>' + result.country + '</td>' +
                                     '<td>' + result.raw_failure + '</td>' +
                                     '<td>' + result.test_result + '</td>' +
+                                    '<td class="text-break">' + result.lkt_datetime + '</td>' +
                                     '</tr>';
                                 $('#adv-search-results tbody').append(row);
                                 $('#adv-search-results').removeClass('d-none');
@@ -236,12 +255,12 @@
     $(document).ready(function() {
         $('#foxconnReportBtn').click(function() {
             // Hide the "Raw Failure" column
-            $('#adv-search-results th:nth-child(7), #adv-search-results td:nth-child(7)').hide();
+            $('#adv-search-results th:nth-child(7), #adv-search-results td:nth-child(7), #adv-search-results th:nth-child(9), #adv-search-results td:nth-child(9)').hide();
 
             // Change "Date added" to "Date received"
             $('#adv-search-results th:nth-child(2)').text('Date received');
 
-            // Remove Bootstrap row classes
+            // Remove row classes
             $('#adv-search-results tbody tr').removeClass('table-success table-danger table-warning table-info table-primary table-secondary table-light table-dark');
 
             // Iterate through the "Result" column and update values
