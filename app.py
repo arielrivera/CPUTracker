@@ -1,6 +1,6 @@
 from flask import Flask, g, request, render_template, Response, jsonify, session, redirect, url_for, make_response, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3 , os, shutil, sqlite3, py7zr, sys
+import sqlite3 , os, shutil, sqlite3, py7zr, sys, zlib
 from flask_bootstrap import Bootstrap
 from datetime import datetime
 sys.path.append('./utils')
@@ -70,6 +70,9 @@ def get_records():
 def logs():
     return render_template('logs.html')
 
+def decompress_text(compressed_text):
+    return zlib.decompress(compressed_text).decode('utf-8')
+
 
 @app.route('/get_logs_records', methods=['GET'])
 def get_logs_records():
@@ -84,8 +87,6 @@ def get_logs_records():
         query_sn = ""
         params = []
 
-
-    
     db = get_db()
     
     if records_per_page == 'all':
@@ -98,16 +99,91 @@ def get_logs_records():
         records = db.execute(query, params).fetchall()
     
     db.close()
-    
-    # Convert records to a list of dictionaries
-    records_list = [dict(record) for record in records]
-    
+
+    # Decompress the text fields
+    decompressed_records = []
+    for record in records:
+        decompressed_record = list(record)
+        decompressed_record[3] = decompress_text(record[3])  # Decompress host_status
+        decompressed_record[5] = decompress_text(record[5])  # Decompress csv_file_content
+        decompressed_records.append(tuple(decompressed_record))
+            
+    # Define the keys for the dictionary
+    keys = ['id', 'file_name', 'serial_number','host_status', 'csv_file_name', 'csv_file_content']
+
+    # Convert records to a list of dictionaries and ensure all fields are JSON serializable
+    records_list = []
+    for record in decompressed_records:
+        record_dict = dict(zip(keys, record))
+        for key, value in record_dict.items():
+            if isinstance(value, bytes):
+                record_dict[key] = value.decode('utf-8')  # Convert bytes to str
+        records_list.append(record_dict)
+
     return jsonify({'records': records_list})
 
 
 @app.route('/settings')
 def settings():
-    return render_template('settings.html')
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Retrieve user data
+        cursor.execute("SELECT id, username, enabled, is_admin FROM users")
+        users = cursor.fetchall()
+
+        # Close the connection
+        conn.close()
+
+        # Convert user data to a list of dictionaries
+        users_list = []
+        for user in users:
+            users_list.append({
+                'id': user[0],
+                'username': user[1],
+                'enabled': user[2],
+                'is_admin': user[3]
+            })
+
+         # Define context variables
+        db_info = {
+            'name': 'cputracker.db',
+            'size': os.path.getsize('cputracker.db')
+        }
+        logs_folder = '/logs_folder'
+
+        # Render the template with user data and context variables
+        return render_template('settings.html', users=users_list, db_info=db_info, logs_folder=logs_folder)
+
+
+    except Exception as e:
+        # Handle any errors
+        return str(e), 500
+
+@app.route('/delete_user', methods=['POST'])
+def delete_user():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Delete the user
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
+        # Commit the changes and close the connection
+        conn.commit()
+        conn.close()
+
+        # Return a JSON response
+        return jsonify({'success': True})
+
+    except Exception as e:
+        # Handle any errors
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -406,147 +482,6 @@ def read_audit():
 
 # --------------------------------- AUDIT AREA ENDS 
 
-# --------- LOGS AREA START
-# Global variable to ensure the process runs only once
-process_running = False
-
-# @app.route('/start_process', methods=['POST'])
-# def start_process_route():
-#     data = request.get_json()
-#     mode = data.get('mode', 'new-files')
-#     start_process(mode)
-#     return jsonify({"message": "Process started in mode: " + mode})
-
-# @app.route('/stop_process', methods=['POST'])
-# def stop_process_route():
-#     stop_process()
-#     return jsonify({"message": "Process stopped."})
-
-# Moved from abandoned extra py file 
-#
-def get_serial_number(file_name):
-    write_to_audit(f"get_serial_number,  file: {file_name}", '7zlogfiles')
-    parts = file_name.split('_')
-    if len(parts) > 2:
-        return parts[1]
-    return None
-
-def process_file(file_path, temp_folder, db):
-    write_to_audit(f"process_file,  file_path: {file_path}  temp_folder: {temp_folder}", '7zlogfiles')
-    file_name = os.path.basename(file_path)
-    serial_number = get_serial_number(file_name)
-    if not serial_number:
-        write_to_audit("process_file,  Invalid file name format.", '7zlogfiles')
-        return "Invalid file name format."
-
-    # Copy file to temp folder
-    temp_file_path = os.path.join(temp_folder, file_name)
-    shutil.copy(file_path, temp_file_path)
-    write_to_audit(f"process_file,  temp_file_path: {temp_file_path}", '7zlogfiles')
-    try:
-        with py7zr.SevenZipFile(temp_file_path, mode='r') as archive:
-            archive.extractall(path=temp_folder)
-        write_to_audit("process_file, Extraction of completed successfully.", '7zlogfiles')
-        
-    except FileNotFoundError:
-        write_to_audit(f"Error: File {temp_file_path} not found.", '7zlogfiles')
-    except py7zr.exceptions.Bad7zFile:
-        write_to_audit(f"Error: {temp_file_path} is not a valid 7z file.", '7zlogfiles')
-    except Exception as e:
-        write_to_audit(f"An error occurred: {str(e)}", '7zlogfiles')
-
-    # Read Host_Status.txt
-    host_status_path = os.path.join(temp_folder, 'Host_Status.txt')
-    host_status = None
-    if os.path.exists(host_status_path):
-        with open(host_status_path, 'r') as file:
-            host_status = file.read()
-
-    # Read CSV file
-    csv_file_name = None
-    csv_file_content = None
-    for file in os.listdir(temp_folder):
-        if file.startswith(serial_number) and file.endswith('.csv'):
-            csv_file_name = file
-            with open(os.path.join(temp_folder, file), 'r') as csv_file:
-                csv_file_content = csv_file.read()
-            break
-
-    # Store data in the database
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute("""
-            INSERT INTO LOGS (file_name, serial_number, host_status, csv_file_name, csv_file_content) 
-            VALUES (?, ?, ?, ?, ?)
-        """, ('example.7z', '12345', 'active', 'example.csv', 'csv content here'))
-    db.commit()
-
-    # Clean up temp folder
-    shutil.rmtree(temp_folder)
-    os.makedirs(temp_folder)
-
-    return f"Processed file: {file_name}"
-
-def process_logs(mode):
-    global process_running
-    write_to_audit('Running function process_logs.', '7zlogfiles')
-    if process_running:
-        return "Process is already running."
-    process_running = True
-
-    logs_folder = "/app/logs_folder"
-    temp_folder = "/app/temp_folder"
-    db = get_db()
-
-    if not os.path.exists(temp_folder):
-        os.makedirs(temp_folder)
-
-    files = [os.path.join(logs_folder, f) for f in os.listdir(logs_folder) if f.endswith('.7z')]
-    if mode == "new-files":
-        files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-    else:
-        files.sort(key=lambda x: os.path.getctime(x))
-
-    for file in files:
-        result = process_file(file, temp_folder, db)
-        write_to_audit(f'process_logs->process_file: {result}.', '7zlogfiles')
-        print(result)  # This would be sent to the web interface in a real application
-
-    process_running = False
-    return "Process completed."
-
-# def start_process(mode):
-#     threading.Thread(target=process_logs, args=(mode,)).start()
-
-# def stop_process():
-#     global process_running
-#     process_running = False 
-
-# def run_process_logs_in_context():
-#     with app.app_context():
-#         process_logs()
-
-# ---------
-
-@app.route('/start_process', methods=['POST'])
-def start_process_route():
-    data = request.get_json()
-    mode = data.get('mode', 'new-files')
-    result = start_process(mode)
-    return jsonify({'message': result})
-
-@app.route('/stop_process', methods=['POST'])
-def stop_process_route():
-    stop_process()
-    return jsonify({'message': 'Process stopped.'})
-
-
-# def run_process_logs_in_context(mode):
-#     write_to_audit('Within run_process_logs_in_context', '7zlogfiles')
-#     with app.app_context():
-#         process_logs(mode)
-        
-# --------- LOGS AREA END
 
 
 @app.route('/delete_record', methods=['POST'])
@@ -576,6 +511,40 @@ def delete_record_from_database(record_id):
     finally:
         # Close the connection
         conn.close()
+
+
+@app.route('/save_users', methods=['POST'])
+def save_users():
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Extract form data
+        form_data = request.form
+
+        # Iterate over the form data and update the database
+        for key, value in form_data.items():
+            if key.startswith('enabled_'):
+                user_id = key.split('_')[1]
+                enabled = 1 if value == 'on' else 0
+                cursor.execute("UPDATE users SET enabled = ? WHERE id = ?", (enabled, user_id))
+            elif key.startswith('is_admin_'):
+                user_id = key.split('_')[1]
+                is_admin = 1 if value == 'on' else 0
+                cursor.execute("UPDATE users SET is_admin = ? WHERE id = ?", (is_admin, user_id))
+
+        # Commit the changes and close the connection
+        conn.commit()
+        conn.close()
+
+        # Return a success response
+        return jsonify({'message': 'User settings saved successfully.'})
+
+    except Exception as e:
+        # Handle any errors and return a failure response
+        return jsonify({'message': 'Error saving user settings: ' + str(e)}), 500
+
+
 
 app.jinja_env.add_extension('jinja2.ext.do')
 
