@@ -61,9 +61,8 @@ cursor.execute('''
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL, 
-    enabled BOOLEAN DEFAULT 0,
-    is_admin BOOLEAN DEFAULT 0) 
+    password TEXT NOT NULL
+, enabled BOOLEAN DEFAULT 0) 
     );
 ''')
 
