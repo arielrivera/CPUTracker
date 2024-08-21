@@ -196,6 +196,11 @@
                                 <option value="VM/PPS">Scrap (VM/PPS)</option>
                                 <option value="TESTING">Test in progress</option>
                                 <option value="Unknown">Unknown</option>
+                                <!-- <option value="NFF">NFF</option>
+                                <option value="VF">VF</option>
+                                <option value="VM/PPS">VM/PPS</option>
+                                <option value="TESTING">TESTING</option>
+                                <option value="Unknown">Unknown</option> -->
                             </select>
                         </div>
                     </div>
@@ -635,9 +640,17 @@ function setMode(mode) {
             $('#partNumber').val(row.eq(2).text());
             $('#datecode').val(row.eq(3).text());
             $('#country').val(row.eq(4).text());
-            $('#testResult').val(row.eq(6).text());
+            // $('#testResult').val(row.eq(6).text());
+                // Get only the text from the test result cell
+            const testResultText = row.eq(6).contents().filter(function() {
+                return this.nodeType === Node.TEXT_NODE;
+            }).text();
+            console.log('testResultText:'+testResultText);
+            
             $('#rawFailure').val(row.eq(5).text());
             $('#editModal').modal('show');
+            $('#testResult').val(testResultText)
+            $('#testResult').val(testResultText).change();
         });
 
     
@@ -878,7 +891,11 @@ function setMode(mode) {
     function showHostStatusModal(fileName, hostStatus) {
         document.getElementById('hostStatusModalLabel').innerText = fileName;
         document.getElementById('hostStatusContent').value = hostStatus;
-        $('#hostStatusModal').modal('show'); 
+        
+        $('#hostStatusModal').modal('show');
+        const hostStatusContent = document.getElementById('hostStatusContent');
+        hostStatusContent.scrollTop = hostStatusContent.scrollHeight;
+ 
     }
 
     

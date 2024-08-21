@@ -84,6 +84,7 @@
         <table class="table table-bordered d-none" id="adv-search-results">
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>Date added</th>
                     <th>Serial</th>
                     <th>Part #</th>
@@ -101,9 +102,6 @@
     </div>
 </div>
 
-<!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script> -->
 <script>
     $(document).ready(function() {
         // Initialize the datepicker
@@ -118,6 +116,11 @@
             $('#startDate').datepicker({
                 format: 'yyyy-mm-dd',
                 autoclose: true
+            }).on('changeDate', function(e) {
+                // Set the end datepicker's start date to the selected start date
+                $('#endDate').datepicker('setStartDate', e.date);
+                // // Optionally, set the end datepicker's date to the selected start date
+                $('#endDate').datepicker('update', e.date);
             });
             $('#endDate').datepicker({
                 format: 'yyyy-mm-dd',
@@ -156,10 +159,12 @@
                     if (response.results && Array.isArray(response.results)) {
                         // Clear existing table rows
                         $('#adv-search-results tbody').empty();
+                        var rowcount=0;
                         response.results.forEach(result => {
                             if (result.serial_number && result.part_number) {
                                 // Append new rows to the table
                                 var row = '<tr comp_snpn="' + result.composite_snpn + '" record_id="' + result.id + '" class="' + getRowClass(result.test_result) + '">' +
+                                    '<td>' + rowcount++ + '</td>' +
                                     '<td class="text-nowrap">' + result.date_added + '</td>' +
                                     '<td>' + result.serial_number + '</td>' +
                                     '<td class="text-nowrap">' + result.part_number + '</td>' +
@@ -231,17 +236,17 @@
     $(document).ready(function() {
         $('#foxconnReportBtn').click(function() {
             // Hide the "Raw Failure" column
-            $('#adv-search-results th:nth-child(6), #adv-search-results td:nth-child(6)').hide();
+            $('#adv-search-results th:nth-child(7), #adv-search-results td:nth-child(7)').hide();
 
             // Change "Date added" to "Date received"
-            $('#adv-search-results th:nth-child(1)').text('Date received');
+            $('#adv-search-results th:nth-child(2)').text('Date received');
 
             // Remove Bootstrap row classes
             $('#adv-search-results tbody tr').removeClass('table-success table-danger table-warning table-info table-primary table-secondary table-light table-dark');
 
             // Iterate through the "Result" column and update values
             $('#adv-search-results tbody tr').each(function() {
-                var resultCell = $(this).find('td:nth-child(7)');
+                var resultCell = $(this).find('td:nth-child(8)');
                 var resultValue = resultCell.text().trim();
 
                 if (resultValue === 'VM/PPS') {

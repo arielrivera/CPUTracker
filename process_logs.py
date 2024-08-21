@@ -3,6 +3,7 @@ import shutil
 import sqlite3
 import py7zr
 import datetime
+import zlib
 
 # Define a writable directory
 WRITABLE_TEMP_DIR = '/tmp/cputracker_temp'
@@ -15,9 +16,11 @@ def get_db():
     return db
 
 def file_exists(file_name, db_conn):
+    print(f"Checking if file {file_name} exists in the database.")
     cursor = db_conn.cursor()
     cursor.execute("SELECT COUNT(1) FROM LOGS WHERE file_name = ?", (file_name,))
     exists = cursor.fetchone()[0] > 0
+    print(f"File {file_name} exists in the database ?: {exists}")
     cursor.close()
     return exists
 
@@ -27,19 +30,25 @@ def get_serial_number(file_name):
         return parts[1]
     return None
 
+def compress_text(text):
+    return zlib.compress(text.encode('utf-8'))
+
 def process_file(file_path, temp_folder, db_conn):
     file_name = os.path.basename(file_path)
     print(f"Working with file: {file_name}")
     if(file_exists(file_name, db_conn)):
+        print(f"File {file_name} already processed.\n")
         return f"File {file_name} already processed."
     serial_number = get_serial_number(file_name)
+    print(f"Serial number: {serial_number}")
     if not serial_number:
         return "Invalid file name format."
 
     # Copy file to temp folder
     temp_file_path = os.path.join(temp_folder, file_name)
+    print(f"Temp file path: {temp_file_path}")
     shutil.copy(file_path, temp_file_path)
-
+    print(f"File copied to temp folder.")
     try:
         with py7zr.SevenZipFile(temp_file_path, mode='r') as archive:
             archive.extractall(path=temp_folder)
@@ -53,10 +62,13 @@ def process_file(file_path, temp_folder, db_conn):
 
     # Read Host_Status.txt
     host_status_path = os.path.join(temp_folder, 'Host_Status.txt')
+    print(f"Host status file path: {host_status_path}")
     host_status = None
     if os.path.exists(host_status_path):
         with open(host_status_path, 'r') as file:
             host_status = file.read()
+        print(f"\nCompressing text before inserting into db\n")
+        host_status = compress_text(host_status)
 
     # Read CSV file
     csv_file_name = None
@@ -66,6 +78,8 @@ def process_file(file_path, temp_folder, db_conn):
             csv_file_name = file
             with open(os.path.join(temp_folder, file), 'r') as csv_file:
                 csv_file_content = csv_file.read()
+                print(f"\nCompressing text before inserting into db\n")
+                csv_file_content = compress_text(csv_file_content)
             break
 
     # Store data in the database
@@ -91,7 +105,11 @@ def process_logs(mode):
         return "Process is already running."
     process_running = True
 
+    # For macos, the logs folder is /var/logs_folder
     logs_folder = "LOGS_FOLDER"
+
+    # For Windows, the logs folder is logs_folder
+    logs_folder = "logs_folder"
     temp_folder = WRITABLE_TEMP_DIR
     db_conn = get_db()
 

@@ -1,11 +1,103 @@
 
-    <div class="container">
-        <h1>Settings</h1>
-        <form>
-            <div class="form-group">
-                <label for="refresh-rate">Refresh Rate (seconds)</label>
-                <input type="number" class="form-control" id="refresh-rate" name="refresh-rate" value="5">
-            </div>
+    <div class="container mt-4">
+       <!-- Users Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        Users
+    </div>
+    <div class="card-body">
+        <form id="usersForm">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Enabled</th>
+                        <th>Is Admin</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr id="user-{{ user.id }}">
+                        <td>{{ user.username }}</td>
+                        <td><input type="checkbox" name="enabled_{{ user.id }}" {% if user.enabled %}checked{% endif %}></td>
+                        <td><input type="checkbox" name="is_admin_{{ user.id }}" {% if user.is_admin %}checked{% endif %}></td>
+                        <td>
+                            <button type="button" class="btn btn-danger" onclick="deleteUser({{ user.id }})">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             <button type="submit" class="btn btn-primary">Save</button>
         </form>
+        <div id="saveAlert" class="alert alert-info mt-3" style="display: none;"></div>
     </div>
+</div>
+
+        <!-- SQLite Database Information Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                SQLite Database Information
+            </div>
+            <div class="card-body">
+                <p><strong>Database Path:</strong> {{ db_info.path }}</p>
+                <p><strong>Database Size:</strong> {{ db_info.size }} MB</p>
+                <p><strong>Connection Details:</strong> {{ db_info.connection_details }}</p>
+            </div>
+        </div>
+
+        <!-- Logs Folder Status Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                Logs Folder Status
+            </div>
+            <div class="card-body">
+                <p><strong>Exists:</strong> {{ logs_folder.exists }}</p>
+                <p><strong>Is Empty:</strong> {{ logs_folder.is_empty }}</p>
+                <p><strong>Number of .7z Files:</strong> {{ logs_folder.num_7z_files }}</p>
+                <p><strong>File Dates:</strong> {{ logs_folder.file_dates }}</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#usersForm').on('submit', function(event) {
+                event.preventDefault();
+                $.ajax({
+                    url: '/save_users',
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        $('#saveAlert').text(response.message).show();
+                    },
+                    error: function() {
+                        $('#saveAlert').text('Error saving data').show();
+                    }
+                });
+            });
+        });
+    </script>
+<script>
+    function deleteUser(userId) {
+        if (confirm('Are you sure you want to delete this user?')) {
+            fetch('/delete_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user_id: userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('user-' + userId).remove();
+                } else {
+                    alert('Error deleting user');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+    </script>
