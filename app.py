@@ -534,12 +534,12 @@ def save_users():
             if key.startswith('enabled_'):
                 user_id = key.split('_')[1]
                 enabled = 1 if value == 'on' else 0
-                print(f"Updating enabled for user_id {user_id} to {enabled}")
+                print(f"Updating ENABLED for UserID {user_id} TO {enabled}")
                 cursor.execute("UPDATE users SET enabled = ? WHERE id = ?", (enabled, user_id))
             elif key.startswith('is_admin_'):
-                user_id = key.split('_')[1]
+                user_id = key.split('_')[2]
                 is_admin = 1 if value == 'on' else 0
-                print(f"Updating is_admin for user_id {user_id} to {is_admin}")
+                print(f"Updating is_admin for UserId {user_id} to {is_admin}")
                 cursor.execute("UPDATE users SET is_admin = ? WHERE id = ?", (is_admin, user_id))
 
         # Commit the changes and close the connection

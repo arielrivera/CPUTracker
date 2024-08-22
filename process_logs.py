@@ -102,7 +102,10 @@ def process_file(file_path, temp_folder, db_conn):
     db_conn.commit()
 
     # Clean up temp folder
-    shutil.rmtree(temp_folder)
+    for file in os.listdir(temp_folder):
+        file_path = os.path.join(temp_folder, file)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
     os.makedirs(temp_folder)
 
     return f"Processed file: {file_name}"
