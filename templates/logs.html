@@ -1,12 +1,26 @@
 <div id="logs-section" class="container mt-5">
     <h1 class="text-center">LOGS Section</h1>
     <div id="controls" class="d-flex justify-content-center mb-3">
-        <button id="start-btn" class="btn btn-primary mr-2" disabled>Start Process</button>
-        <button id="stop-btn" class="btn btn-danger mr-2" disabled>Stop Process</button>
-        <select id="mode-select" class="form-control w-auto">
-            <option value="new-files">New files only</option>
-            <option value="all-files">All files</option>
-        </select>
+        <div class="d-flex flex-grow-1 justify-content-center align-items-center">
+            <button id="start-btn" class="btn btn-primary mr-2">Start Process</button>
+            
+            <button id="stop-btn" class="btn btn-danger mr-2" disabled>Stop Process</button>
+            <select id="mode-select" class="form-control w-auto">
+                <option value="new-files">New files only</option>
+                <option value="all-files">All files</option>
+            </select>
+        </div>
+        <div class="ml-3 align-self-center">
+            <h6 class="font-weight-bold">Notes:</h6>
+            <small>
+                <ul class="list-unstyled">
+                    <li>The original log files are untouched.</li>
+                    <li>They're copied to a temp folder, decompressed and then deleted.</li>
+                    <li>Serial number, date and time are extracted from the file name.</li>
+                    <li>Files are consumed into the db are Host_status.txt and a csv file.</li>
+                </ul>
+            </small>
+        </div>
     </div>
     <!-- <div id="spinner" class="spinner-border text-primary hidden" role="status">
         <span class="sr-only">Loading...</span>
@@ -52,17 +66,24 @@
             output.html('');
     
             $.ajax({
-                url: '/start_process',
+                url: '/stream_process_logs',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({ mode: mode }),
+                xhrFields: {
+                    onprogress: function(e) {
+                        const newContent = e.currentTarget.responseText;
+                        output.html(newContent);
+                        output.scrollTop(output[0].scrollHeight); // Auto-scroll to the bottom
+                    }
+                },
                 success: function(data) {
                     spinner.addClass('hidden');
                     output.html(data.message);
                 },
                 error: function(xhr, status, error) {
                     spinner.addClass('hidden');
-                    output.html('Error: ' + error);
+                    output.html('An error occurred: ' + error);
                 }
             });
         });

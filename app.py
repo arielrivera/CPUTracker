@@ -3,6 +3,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3 , os, shutil, sqlite3, py7zr, sys, zlib
 from flask_bootstrap import Bootstrap
 from datetime import datetime
+import subprocess
+
 sys.path.append('./utils')
 # from utils.process_logs import start_process, stop_process
 
@@ -550,6 +552,16 @@ def save_users():
         print(f"Error: {e}")
         return jsonify({'message': 'An error occurred while saving user settings.'}), 500
 
+def run_process_logs():
+    process = subprocess.Popen(['python3', 'process_logs.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    for line in iter(process.stdout.readline, ''):
+        yield line
+    for line in iter(process.stderr.readline, ''):
+        yield line
+
+@app.route('/stream_process_logs', methods=['POST'])
+def stream_process_logs():
+    return Response(run_process_logs(), mimetype='text/plain')
 
 
 app.jinja_env.add_extension('jinja2.ext.do')

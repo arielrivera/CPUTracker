@@ -1,13 +1,13 @@
-import os
+import os, time
 import shutil
 import sqlite3
 import py7zr
 import datetime
 # import zlib
+from alive_progress import alive_bar
 
 # Define a writable directory
 WRITABLE_TEMP_DIR = '/tmp/cputracker_temp'
-# Global variable to ensure the process runs only once
 process_running = False
 
 def get_db():
@@ -122,9 +122,14 @@ def process_logs(mode):
     logs_folder = "logs_folder"
     temp_folder = WRITABLE_TEMP_DIR
     db_conn = get_db()
+    print(f"Logs folder: {logs_folder}")
+    print(f"Temp folder: {temp_folder}")
+
 
     if not os.path.exists(temp_folder):
+        print(f"Temp folder not found, creating {temp_folder}")
         os.makedirs(temp_folder)
+        # validate if it worked or not in the future
 
     files = [os.path.join(logs_folder, f) for f in os.listdir(logs_folder) if f.endswith('.7z')]
     if mode == "new-files":
@@ -132,8 +137,16 @@ def process_logs(mode):
     else:
         files.sort(key=lambda x: os.path.getctime(x))
 
-    for file in files:
-        process_file(file, temp_folder, db_conn)
+    if not files:
+        print("No valid files found in the folder.\nStopping the process.")
+        return "Process completed."
+    
+    total_items = len(files)
+    with alive_bar(total_items, title='Processing', spinner='dots_waves', bar='smooth') as bar:
+        for file in files:
+            process_file(file, temp_folder, db_conn)
+            bar() 
+
 
     process_running = False
     return "Process completed."

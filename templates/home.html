@@ -242,7 +242,7 @@
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="hostFileModalLabel">Host Files</h5>
+                <h5 class="modal-title" id="hostFileModalLabel">LOGS and Host_status Files</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -251,7 +251,7 @@
                 <table class="table table-striped table-hover table-bordered" id="LOGSModalTable">
                     <thead>
                         <tr>
-                            <th scope="col">Count</th>
+                            <th scope="col">ID</th>
                             <th scope="col">File Name</th>
                         </tr>
                     </thead>
@@ -823,14 +823,14 @@ function setMode(mode) {
 
     // RawFailures column handling
     // Read the cookie on page load
-    let showRawFailures = getCookie("show_raw_failures") === "true";
-    $("#show-raw-failures").prop("checked", showRawFailures);
-    toggleRawFailureColumn(showRawFailures);
+    // let showRawFailures = getCookie("show_raw_failures") === "true";
+    // $("#show-raw-failures").prop("checked", showRawFailures);
+    // toggleRawFailureColumn(showRawFailures);
 
     // Event listener for checkbox change
     $("#show-raw-failures").change(function() {
         let isChecked = $(this).is(":checked");
-        setCookie("show_raw_failures", isChecked, 30); // Save for 7 days
+        // setCookie("show_raw_failures", isChecked, 30); // Save for 30 days
         toggleRawFailureColumn(isChecked);
     });
 
