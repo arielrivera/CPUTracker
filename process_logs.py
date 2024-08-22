@@ -4,7 +4,7 @@ import sqlite3
 import py7zr
 import datetime
 # import zlib
-from alive_progress import alive_bar
+# from alive_progress import alive_bar
 
 # Define a writable directory
 WRITABLE_TEMP_DIR = '/tmp/cputracker_temp'
@@ -141,11 +141,15 @@ def process_logs(mode):
         print("No valid files found in the folder.\nStopping the process.")
         return "Process completed."
     
-    total_items = len(files)
-    with alive_bar(total_items, title='Processing', spinner='dots_waves', bar='smooth') as bar:
-        for file in files:
-            process_file(file, temp_folder, db_conn)
-            bar() 
+    for file in files:
+        process_file(file, temp_folder, db_conn)
+
+    # total_items = len(files)
+    # process_file(file, temp_folder, db_conn)
+    # with alive_bar(total_items, title='Processing', spinner='dots_waves', bar='smooth') as bar:
+    #     for file in files:
+    #         process_file(file, temp_folder, db_conn)
+    #         bar() 
 
 
     process_running = False
