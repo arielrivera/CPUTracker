@@ -16,11 +16,10 @@ def get_db():
     return db
 
 def file_exists(file_name, db_conn):
-    print(f"Checking if file {file_name} exists in the database.")
     cursor = db_conn.cursor()
     cursor.execute("SELECT COUNT(1) FROM LOGS WHERE file_name = ?", (file_name,))
     exists = cursor.fetchone()[0] > 0
-    print(f"File {file_name} exists in the database ?: {exists}")
+    # print(f"File {file_name} exists in the database ?: {exists}")
     cursor.close()
     return exists
 

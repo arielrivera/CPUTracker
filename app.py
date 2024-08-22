@@ -563,6 +563,18 @@ def run_process_logs():
 def stream_process_logs():
     return Response(run_process_logs(), mimetype='text/plain')
 
+@app.route('/truncate-logs', methods=['POST'])
+def truncate_logs():
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM LOGS')
+        conn.commit()
+        cursor.execute('VACUUM')
+        conn.close()
+        return jsonify({'message': 'Logs table truncated and space reclaimed successfully.'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 app.jinja_env.add_extension('jinja2.ext.do')
 

@@ -5,11 +5,14 @@
             <button id="start-btn" class="btn btn-primary mr-2">Start Process</button>
             
             <button id="stop-btn" class="btn btn-danger mr-2" disabled>Stop Process</button>
-            <select id="mode-select" class="form-control w-auto">
+            <select id="mode-select" class="form-control w-auto mr-2">
                 <option value="new-files">New files only</option>
                 <option value="all-files">All files</option>
             </select>
+            <button id="truncate-btn" class="btn btn-warning mr-2">Truncate Logs table</button>            
         </div>
+
+    
         <div class="ml-3 align-self-center">
             <h6 class="font-weight-bold">Notes:</h6>
             <small>
@@ -17,7 +20,7 @@
                     <li>The original log files are untouched.</li>
                     <li>They're copied to a temp folder, decompressed and then deleted.</li>
                     <li>Serial number, date and time are extracted from the file name.</li>
-                    <li>Files are consumed into the db are Host_status.txt and a csv file.</li>
+                    <li>Files consumed into the db are Host_status.txt and a csv file.</li>
                 </ul>
             </small>
         </div>
@@ -55,11 +58,28 @@
     $(document).ready(function() {
         const startBtn = $('#start-btn');
         const stopBtn = $('#stop-btn');
+        const truncateBtn = $('#truncate-btn');
         const modeSelect = $('#mode-select');
         const spinner = $('#spinner');
         const output = $('#output');
         const logsTableBody = $('#logs-table tbody');
     
+        truncateBtn.click(function() {
+            if (confirm('Are you sure you want to truncate the logs table?')) {
+                $.ajax({
+                    url: '/truncate-logs',
+                    type: 'POST',
+                    success: function(response) {
+                        $('#logs-table tbody').empty();
+                        $('#output').html('<div class="alert alert-success">' + response.message + '</div>');
+                    },
+                    error: function(xhr, status, error) {
+                        $('#output').html('<div class="alert alert-danger">Error: ' + xhr.responseJSON.error + '</div>');
+                    }
+                });
+            }
+        });
+        
         startBtn.click(function() {
             const mode = modeSelect.val();
             spinner.removeClass('hidden');
