@@ -278,7 +278,8 @@ def search():
             'country': row[5],
             'test_result': row[6],
             'composite_snpn': row[7],
-            'raw_failure': row[8]
+            'raw_failure': row[8],
+            'lkt_datetime': row[9]
             
         })
 
@@ -513,6 +514,7 @@ def delete_record_from_database(record_id):
         conn.close()
 
 
+
 @app.route('/save_users', methods=['POST'])
 def save_users():
     try:
@@ -522,15 +524,20 @@ def save_users():
         # Extract form data
         form_data = request.form
 
+        # Log the form data
+        print("Form Data:", form_data)
+
         # Iterate over the form data and update the database
         for key, value in form_data.items():
             if key.startswith('enabled_'):
                 user_id = key.split('_')[1]
                 enabled = 1 if value == 'on' else 0
+                print(f"Updating enabled for user_id {user_id} to {enabled}")
                 cursor.execute("UPDATE users SET enabled = ? WHERE id = ?", (enabled, user_id))
             elif key.startswith('is_admin_'):
                 user_id = key.split('_')[1]
                 is_admin = 1 if value == 'on' else 0
+                print(f"Updating is_admin for user_id {user_id} to {is_admin}")
                 cursor.execute("UPDATE users SET is_admin = ? WHERE id = ?", (is_admin, user_id))
 
         # Commit the changes and close the connection
@@ -539,10 +546,9 @@ def save_users():
 
         # Return a success response
         return jsonify({'message': 'User settings saved successfully.'})
-
     except Exception as e:
-        # Handle any errors and return a failure response
-        return jsonify({'message': 'Error saving user settings: ' + str(e)}), 500
+        print(f"Error: {e}")
+        return jsonify({'message': 'An error occurred while saving user settings.'}), 500
 
 
 

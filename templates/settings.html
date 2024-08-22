@@ -63,14 +63,26 @@
 
     <script>
         $(document).ready(function() {
+            var changedData = {};
+
+            // Track changes on checkboxes
+            $('input[type="checkbox"]').on('change', function() {
+                var name = $(this).attr('name');
+                var value = $(this).is(':checked') ? 'on' : 'off';
+                changedData[name] = value;
+            });
+
+            // Submit only changed data
             $('#usersForm').on('submit', function(event) {
                 event.preventDefault();
                 $.ajax({
                     url: '/save_users',
                     method: 'POST',
-                    data: $(this).serialize(),
+                    data: changedData,
                     success: function(response) {
                         $('#saveAlert').text(response.message).show();
+                        // Clear changed data after successful submission
+                        changedData = {};
                     },
                     error: function() {
                         $('#saveAlert').text('Error saving data').show();

@@ -77,7 +77,7 @@
     <table id='home_results_table' class="table table-bordered table-striped table-hover">
         <thead class="table-dark">
             <tr>
-                <th data-column="date_added">Date</th>
+                <th data-column="date_added">Date added</th>
                 <th data-column="serial_number">Serial Number</th>
                 <th data-column="part_number">Part Number</th>
                 <th data-column="datecode">Datecode</th>
@@ -382,6 +382,10 @@ function setMode(mode) {
             $(this).data('order', order);
 
             sortTable(column, order);
+            const sortIcon= '  <img class="sort-icon" src="static/sort-solid.svg" alt="Sort icon" width="15" height="15">';
+            $('#home_results_table th .sort-icon').remove();
+            $(this).append(sortIcon);
+
         });
         // Sorting table related functions end
 
@@ -559,6 +563,7 @@ function setMode(mode) {
                                         '<td>' + result.country + '</td>' +
                                         '<td class="raw-failure-column"><span class="cell-content">' + result.raw_failure + '</span></td>' +
                                         '<td class="result-cell" rescell_sn="'+result.serial_number+'">' + result.test_result + ' <img class="result-icon" src="static/alert-circle.svg" alt="Alert Icon" width="15" height="15"></td>' +
+                                        '<td>' + result.lkt_datetime + '</td>' +
                                         '</tr>';
                                     $('#home_results_table tbody').append(row);
                                 } else 

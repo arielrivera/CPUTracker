@@ -2,27 +2,25 @@
     <!-- Top bar for Advanced Search -->
     <div class="card mb-4">
         <div class="card-header">
-            Advanced Search
+            Detailed Search
         </div>
         <div class="card-body bg-light">
             <form id="advancedSearchForm">
                 <div class="form-row">
-                    <!-- Date or date range selection control -->
-                    <!-- <div class="col-md-3 mb-3">
-                        <label for="dateRange">Date Range</label>
-                        <input type="text" class="form-control" id="dateRange" name="dateRange" placeholder="Select date" data-date-format="yyyy-mm-dd">
-                    </div> -->
-
-                 <!-- Date range selection  -->
-                 <div class="col-md-3 mb-3">
-                    <label for="startDate">Start Date</label>
-                    <input type="text" class="form-control" id="startDate" name="startDate" placeholder="Select start date" data-date-format="yyyy-mm-dd">
+                    <!-- Date range selection -->
+                <div class="col-md-6 mb-3">
+                    <div class="text-center">
+                        <label for="startDate">Received Date Range</label>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-md-6 mb-3">
+                            <input type="text" class="form-control" id="startDate" name="startDate" placeholder="Select start date" data-date-format="yyyy-mm-dd">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <input type="text" class="form-control" id="endDate" name="endDate" placeholder="Select end date" data-date-format="yyyy-mm-dd">
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <label for="endDate">End Date</label>
-                    <input type="text" class="form-control" id="endDate" name="endDate" placeholder="Select end date" data-date-format="yyyy-mm-dd">
-                </div>
-                    
 
                     <!-- Part number dropdown -->
                     <div class="col-md-3 mb-3">
@@ -62,7 +60,7 @@
                         <input type="text" class="form-control" id="adv_rawFailure" name="rawFailure" placeholder="Keyword">
                     </div>
                     <div class="col-md-3 mb-3">
-                        <label for="lkt_datepicker">Last Known Test Datetime(from logs)</label>
+                        <label for="lkt_datepicker">Last Known Test Datetime</label>
                         <input type="text" class="form-control" id="lkt_datepicker" name="lkt_datepicker" placeholder="Select end date" data-date-format="YYYY-MM-DD">
                     </div>
                     <div class="col-md-3 mb-3">
