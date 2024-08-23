@@ -6,7 +6,7 @@ import datetime
 # import zlib
 # from alive_progress import alive_bar
 
-# Define a writable directory
+#  writable directory
 WRITABLE_TEMP_DIR = '/tmp/cputracker_temp'
 process_running = False
 
@@ -89,10 +89,12 @@ def process_file(file_path, temp_folder, db_conn):
     csv_file_name = None
     csv_file_content = None
     lkt_datetime = None
-    for file in os.listdir(temp_folder):
-        if file.startswith(serial_number) and file.endswith('.csv'):
-            csv_file_name = file
-            with open(os.path.join(temp_folder, file), 'r') as csv_file:
+    files = [os.path.join(temp_folder, f) for f in os.listdir(temp_folder) if f.endswith('.csv')]
+    files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+    for file in files:
+        if file.startswith(serial_number):
+            csv_file_name = os.path.basename(file)
+            with open(file, 'r') as csv_file:
                 csv_file_content = csv_file.read()
                 # print(f"\nCompressing text before inserting into db\n")
                 # csv_file_content = compress_text(csv_file_content)

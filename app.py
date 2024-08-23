@@ -92,11 +92,11 @@ def get_logs_records():
     db = get_db()
     
     if records_per_page == 'all':
-        query = f'SELECT id, file_name, serial_number, host_status, csv_file_name, csv_file_content FROM LOGS {query_sn} ORDER BY id DESC'
+        query = f'SELECT id, file_name, serial_number, host_status, csv_file_name, csv_file_content FROM LOGS {query_sn} ORDER BY id ASC'
         records = db.execute(query, params).fetchall()
     else:
         records_per_page = int(records_per_page)
-        query = f'SELECT id, file_name, serial_number, host_status, csv_file_name, csv_file_content FROM LOGS {query_sn} ORDER BY id DESC LIMIT ?'
+        query = f'SELECT id, file_name, serial_number, host_status, csv_file_name, csv_file_content FROM LOGS {query_sn} ORDER BY id ASC LIMIT ?'
         params.append(records_per_page)
         records = db.execute(query, params).fetchall()
     
