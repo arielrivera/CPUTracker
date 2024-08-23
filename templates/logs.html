@@ -17,10 +17,10 @@
             <h6 class="font-weight-bold">Notes:</h6>
             <small>
                 <ul class="list-unstyled">
-                    <li>The original log files are untouched.</li>
+                    <li>No log files are harmed in this process.</li>
                     <li>They're copied to a temp folder, decompressed and then deleted.</li>
-                    <li>Serial number, date and time are extracted from the file name.</li>
-                    <li>Files consumed into the db are Host_status.txt and a csv file.</li>
+                    <li>Serial number, error code, date and time are extracted from the file name.</li>
+                    <!-- <li>Files consumed into the db are Host_status.txt and a csv file.</li> -->
                 </ul>
             </small>
         </div>
@@ -28,9 +28,9 @@
     <!-- <div id="spinner" class="spinner-border text-primary hidden" role="status">
         <span class="sr-only">Loading...</span>
     </div> -->
-    <div id="output" class="mt-3"></div>
+    <div id="output" class="mt-3 hidden"></div>
 
-    <div class="table-responsive">
+    <div class="table-responsive mt-3">
         <p class="lead">
             Last 10 logs records processed:
           </p>
@@ -71,10 +71,13 @@
                     type: 'POST',
                     success: function(response) {
                         $('#logs-table tbody').empty();
+                        $('#output').show();
                         $('#output').html('<div class="alert alert-success">' + response.message + '</div>');
                     },
                     error: function(xhr, status, error) {
+                        $('#output').show();
                         $('#output').html('<div class="alert alert-danger">Error: ' + xhr.responseJSON.error + '</div>');
+                        
                     }
                 });
             }
@@ -93,16 +96,19 @@
                 xhrFields: {
                     onprogress: function(e) {
                         const newContent = e.currentTarget.responseText;
+                        $('#output').show();
                         output.html(newContent);
                         output.scrollTop(output[0].scrollHeight); // Auto-scroll to the bottom
                     }
                 },
                 success: function(data) {
                     spinner.addClass('hidden');
+                    $('#output').show();
                     output.html(data.message);
                 },
                 error: function(xhr, status, error) {
                     spinner.addClass('hidden');
+                    $('#output').show();
                     output.html('An error occurred: ' + error);
                 }
             });
@@ -113,9 +119,11 @@
                 url: '/stop_process',
                 method: 'POST',
                 success: function(data) {
+                    $('#output').show();
                     output.html(data.message);
                 },
                 error: function(xhr, status, error) {
+                    $('#output').show();
                     output.html('Error: ' + error);
                 }
             });
@@ -149,7 +157,7 @@
                 }
             });
         }
-    
+        $('#output').hide();
         // Fetch logs records on page load
         fetchLogsRecords();
     });

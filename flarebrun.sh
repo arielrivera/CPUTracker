@@ -30,7 +30,7 @@ if [ ! -d "$TARGET_FOLDER" ]; then
   # If the user provides a folder, use it
   if [ -n "$USER_FOLDER" ]; then
     TARGET_FOLDER="$USER_FOLDER"
-    # implement user provided path validation, fool proof it
+    # FUTURE. implement user provided path validation, fool proof it
     echo "Using provided folder: $TARGET_FOLDER"
   else
    # Use the temporary folder if no folder is provided
