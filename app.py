@@ -1,6 +1,6 @@
 from flask import Flask, g, request, render_template, Response, jsonify, session, redirect, url_for, make_response, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3 , os, shutil, sqlite3, py7zr, sys, zlib
+import sqlite3 , os, shutil, sqlite3, py7zr, sys, zlib, glob
 from flask_bootstrap import Bootstrap
 from datetime import datetime
 import subprocess
@@ -138,15 +138,33 @@ def settings():
                 'is_admin': user[3]
             })
 
+        file_size_bytes = os.path.getsize('cputracker.db')
+        file_size_mb = file_size_bytes / (1024 * 1024)
+        file_size_str = f"{file_size_mb:.2f} MB"
          # Define context variables
         db_info = {
             'name': 'cputracker.db',
-            'size': os.path.getsize('cputracker.db')
+            'size': file_size_str
         }
-        logs_folder = '/logs_folder'
+        
+        # Log folder information
+        logs_folder = 'logs_folder'
+        logs_info = {
+            'exists': os.path.exists(logs_folder),
+            'size': '0.00 MB',
+            'num_files': 0
+        }
+        if logs_info['exists']:
+            # Calculate total size of the log folder
+            total_size_bytes = sum(os.path.getsize(f) for f in glob.glob(os.path.join(logs_folder, '**'), recursive=True) if os.path.isfile(f))
+            total_size_mb = total_size_bytes / (1024 * 1024)
+            logs_info['size'] = f"{total_size_mb:.2f} MB"
+
+            # Count the number of .7z files in the log folder
+            logs_info['num_files'] = len(glob.glob(os.path.join(logs_folder, '*.7z')))
 
         # Render the template with user data and context variables
-        return render_template('settings.html', users=users_list, db_info=db_info, logs_folder=logs_folder)
+        return render_template('settings.html', users=users_list, db_info=db_info, logs_info=logs_info)
 
 
     except Exception as e:

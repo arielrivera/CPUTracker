@@ -96,13 +96,19 @@ cursor = conn.cursor()
 # for row in rows:
 #     print(row)
 
-cursor.execute("DELETE FROM LOGS")
+cursor.execute("DELETE FROM UNITS_backup")
 conn.commit()
 cursor.execute("VACUUM")
 conn.commit()
-cursor.execute("DELETE FROM sqlite_sequence WHERE name='LOGS'")
+cursor.execute("DELETE FROM sqlite_sequence WHERE name='UNITS_backup'")
 conn.commit()
 
+cursor.execute("DELETE FROM UNITS_old")
+conn.commit()
+cursor.execute("VACUUM")
+conn.commit()
+cursor.execute("DELETE FROM sqlite_sequence WHERE name='UNITS_old'")
+conn.commit()
 
 # cursor.execute('PRAGMA table_info(users);')
 # rows = cursor.fetchall()

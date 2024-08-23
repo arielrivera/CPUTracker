@@ -48,7 +48,9 @@
 
 
 <div class="container-fluid">
-
+    <div id="notification" class="alert alert-primary alert-dismissible fade notification" role="alert">
+        Text copied to clipboard!
+    </div>
     <div id="alert-message" class="alert alert-danger" role="alert" style="display: none;">
         <!-- Messages area  -->
     </div>
@@ -350,7 +352,14 @@ function setMode(mode) {
     }); // End message area handling
 
     $(document).ready(function() {
-
+        const notification = $('#notification');
+        function showNotification(message) {
+            notification.text(message);
+            notification.fadeIn().addClass('show');
+            setTimeout(() => {
+                notification.fadeOut().removeClass('show');
+            }, 2000); // Notification disappears after 2 seconds
+        }
 
         
         // Function to sort table
@@ -682,8 +691,10 @@ function setMode(mode) {
                 document.execCommand('copy');
                 tempInput.remove();
                 console.log(`Copied content: ${cellContent}`);
+                showNotification(`Copied : ${cellContent}`);
             } else {
                 console.log('No content found in the cell.');
+                // showNotification('Error copying content');
             }
         } else if (headerText === 'part number') {
             // Get the comp_snpn attribute of the row
@@ -696,6 +707,7 @@ function setMode(mode) {
                 document.execCommand('copy');
                 tempInput.remove();
                 console.log(`Copied comp_snpn: ${comp_snpn}`);
+                showNotification(`Copied : ${comp_snpn}`);
             } else {
                 console.log('No comp_snpn attribute found.');
             }

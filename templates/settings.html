@@ -41,9 +41,9 @@
                 SQLite Database Information
             </div>
             <div class="card-body">
-                <p><strong>Database Path:</strong> {{ db_info.path }}</p>
-                <p><strong>Database Size:</strong> {{ db_info.size }} MB</p>
-                <p><strong>Connection Details:</strong> {{ db_info.connection_details }}</p>
+                <p><strong>Database Name:</strong> {{ db_info.name }}</p>
+                <p><strong>Database Size:</strong> {{ db_info.size }}</p>
+
             </div>
         </div>
 
@@ -53,10 +53,10 @@
                 Logs Folder Status
             </div>
             <div class="card-body">
-                <p><strong>Exists:</strong> {{ logs_folder.exists }}</p>
-                <p><strong>Is Empty:</strong> {{ logs_folder.is_empty }}</p>
-                <p><strong>Number of .7z Files:</strong> {{ logs_folder.num_7z_files }}</p>
-                <p><strong>File Dates:</strong> {{ logs_folder.file_dates }}</p>
+                <p><strong>Exists:</strong> {{ logs_info.exists }}</p>
+                <p><strong>Folder size:</strong> {{ logs_info.size }}</p>
+                <p><strong>Number of .7z Files:</strong> {{ logs_info.num_files }}</p>
+                
             </div>
         </div>
     </div>
