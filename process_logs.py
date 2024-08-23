@@ -59,6 +59,22 @@ def process_file(file_path, temp_folder, db_conn):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
+
+    # Extract datetime assuming format is 100-000000933_9LN1136S20020_999999_AMD-HC-OSV-HTX0_SCR_YYYYMMDD_HHMMSS.7z
+    date_time_str = temp_file_path.split('_')[-2] + temp_file_path.split('_')[-1].split('.')[0]  # Correct extraction
+    lkt_datetime = datetime.datetime.strptime(date_time_str, '%Y%m%d%H%M%S')            
+    print(f"lkt_datetime: {lkt_datetime}")
+    # Update the lkt_datetime field in the UNITS table
+    if lkt_datetime:
+        update_lkt_datetime(db_conn, serial_number, lkt_datetime)
+    
+
+    # Extract test_code from the 3rd position
+    test_code=''
+    test_code = temp_file_path.split('_')[3]
+    print(f"Test_code: {test_code}")
+
+
     # Read Host_Status.txt
     host_status_path = os.path.join(temp_folder, 'Host_Status.txt')
     print(f"Host status file path: {host_status_path}")
@@ -81,23 +97,17 @@ def process_file(file_path, temp_folder, db_conn):
                 # print(f"\nCompressing text before inserting into db\n")
                 # csv_file_content = compress_text(csv_file_content)
                 # Extract date and time from the file name
-        
-            # Extract datetime assuming format is 100-000000933_9LN1136S20020_999999_AMD-HC-OSV-HTX0_SCR_YYYYMMDD_HHMMSS.7z
-            date_time_str = file.split('_')[-2] + file.split('_')[-1].split('.')[0]  # Correct extraction
-            lkt_datetime = datetime.datetime.strptime(date_time_str, '%Y%m%d%H%M%S')            
-            print(f"lkt_datetime: {lkt_datetime}")
-            # Update the lkt_datetime field in the UNITS table
-            if lkt_datetime:
-                update_lkt_datetime(db_conn, serial_number, lkt_datetime)
             break
+            
 
     # Store data in the database
     cursor = db_conn.cursor()
     current_timestamp = datetime.datetime.now()
+
     cursor.execute("""
-    INSERT INTO LOGS (file_name, serial_number, host_status, csv_file_name, csv_file_content, date_added) 
-    VALUES (?, ?, ?, ?, ?, ?)
-""", (file_name, serial_number, host_status, csv_file_name, csv_file_content, current_timestamp))
+    INSERT INTO LOGS (file_name, serial_number, host_status, csv_file_name, csv_file_content, date_added, test_code) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+""", (file_name, serial_number, host_status, csv_file_name, csv_file_content, current_timestamp, test_code))
 
     db_conn.commit()
 
@@ -106,7 +116,7 @@ def process_file(file_path, temp_folder, db_conn):
         file_path = os.path.join(temp_folder, file)
         if os.path.isfile(file_path):
             os.remove(file_path)
-    os.makedirs(temp_folder)
+    os.makedirs(temp_folder, exist_ok=True)  #Shouldn't need this, but just in case
 
     return f"Processed file: {file_name}"
 

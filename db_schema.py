@@ -12,7 +12,8 @@ cursor.execute('''
         serial_number VARCHAR(20) NOT NULL,
         host_status TEXT,
         csv_file_name VARCHAR(255),
-        csv_file_content TEXT
+        csv_file_content TEXT,
+        test_code VARCHAR(10);
     );
 ''')
 

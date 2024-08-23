@@ -228,7 +228,24 @@
                 });
             });
         });
-    });
+    
+    
+        $('#adv-search-results th').click(function() {
+            console.log('Sorting table');
+            const column = $(this).index();
+            const order = $(this).hasClass('asc') ? 'desc' : 'asc';
+            sortTable(column, order);
+            $(this).toggleClass('asc desc');
+
+            const sortIcon= '  <img class="sort-icon" src="static/sort-solid.svg" alt="Sort icon" width="15" height="15">';
+            $('#adv-search-results th .sort-icon').remove();
+            $(this).append(sortIcon);
+
+        });
+    
+    
+    });  //Ends document ready function
+
 
     // Function to determine row class based on test result
     function getRowClass(testResult) {
@@ -247,6 +264,28 @@
                 return 'table-secondary';
         }
     }
+
+    function sortTable(column, order) {
+            const rows = $('#adv-search-results tbody tr').get();
+
+            rows.sort(function(a, b) {
+                const A = $(a).children('td').eq(column).text().toUpperCase();
+                const B = $(b).children('td').eq(column).text().toUpperCase();
+
+                if (A < B) {
+                    return order === 'asc' ? -1 : 1;
+                }
+                if (A > B) {
+                    return order === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+            $.each(rows, function(index, row) {
+                $('#adv-search-results').children('tbody').append(row);
+            });
+    }
+
+
 </script>
 
 <script>
