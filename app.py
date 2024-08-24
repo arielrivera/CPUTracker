@@ -4,13 +4,12 @@ import sqlite3 , os, shutil, sqlite3, py7zr, sys, zlib, glob
 from flask_bootstrap import Bootstrap
 from datetime import datetime
 import subprocess
-from flask_talisman import Talisman
 
 sys.path.append('./utils')
 # from utils.process_logs import start_process, stop_process
 
 app = Flask(__name__)
-Talisman(app)
+
 app.secret_key = 'AMD'
 # Initialize Bootstrap
 bootstrap = Bootstrap(app)
@@ -599,5 +598,4 @@ def truncate_logs():
 app.jinja_env.add_extension('jinja2.ext.do')
 
 if __name__ == '__main__':
-    # app.run(debug=True)
-    app.run(ssl_context='adhoc')  #  run the apps with HTTPS in development
+    app.run(debug=True)

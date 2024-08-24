@@ -1,0 +1,19 @@
+# Dockerfile.nginx
+FROM arm64v8/nginx
+
+# Ensure the entrypoint script is compatible with ARM64
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Copy the Nginx configuration file
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# # Copy SSL certificates
+# COPY cert.pem /etc/ssl/certs/cert.pem
+# COPY key.pem /etc/ssl/private/key.pem
+
+# Expose port 443 for HTTPS
+EXPOSE 80
+
+# Use the custom entrypoint script
+ENTRYPOINT ["/docker-entrypoint.sh"]

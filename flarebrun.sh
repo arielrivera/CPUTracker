@@ -1,22 +1,16 @@
 #!/bin/zsh
 
-#Stop the container
-docker stop cputrackerapp
-#Remove the container
-docker container rm cputrackerapp
+# Stop and remove the existing containers
+docker stop cputrackerapp nginx4cputrackapp
+docker container rm cputrackerapp nginx4cputrackapp
 
-#  path to the database file on the host machine
+# Path to the database file on the host machine
 DATABASE_PATH=$(pwd)/cputracker.db
 
-#  the folder that contains logs
+# The folder that contains logs
 TARGET_FOLDER="/Users/arivera/Downloads/processed_logs"
-# LINK_NAME="LOGS_FOLDER"
-# #  symbolic link in the current folder
-# ln -s /Users/arivera/Downloads/processed_logs LOGS_FOLDER
-# ln -s "$TARGET_FOLDER" "$LINK_NAME"
 
-
-#  target folder exists or not , prompt or use temp folder
+# Target folder exists or not, prompt or use temp folder
 TEMP_FOLDER="/tmp/processed_logs"
 if [ ! -d "$TARGET_FOLDER" ]; then
   echo "\nThe folder $TARGET_FOLDER does not exist."
@@ -30,10 +24,10 @@ if [ ! -d "$TARGET_FOLDER" ]; then
   # If the user provides a folder, use it
   if [ -n "$USER_FOLDER" ]; then
     TARGET_FOLDER="$USER_FOLDER"
-    # FUTURE. implement user provided path validation, fool proof it
+    # FUTURE: Implement user-provided path validation, foolproof it
     echo "Using provided folder: $TARGET_FOLDER"
   else
-   # Use the temporary folder if no folder is provided
+    # Use the temporary folder if no folder is provided
     TARGET_FOLDER="$TEMP_FOLDER"
     if [ ! -d "$TARGET_FOLDER" ]; then
       mkdir -p "$TARGET_FOLDER"
@@ -44,10 +38,20 @@ if [ ! -d "$TARGET_FOLDER" ]; then
   fi
 fi
 
-#Remove all images 
-docker rmi cputrackerapp_image
-docker build -t cputrackerapp_image .
+# Remove all images
+docker rmi cputrackerapp_image nginx_image
 
-# Start the container
+# Build the Docker images
+docker build -t cputrackerapp_image -f Dockerfile.flask .
+docker build -t nginx_image -f Dockerfile.nginx .
 
-docker run --name cputrackerapp -v "$DATABASE_PATH":/app/cputracker.db -v "$TARGET_FOLDER":/app/logs_folder -p 5001:5001 cputrackerapp_image
+# Create the network if it doesn't exist
+if ! docker network ls | grep -q cputracker_network; then
+  docker network create cputracker_network
+fi
+
+# Start the Flask container
+docker run -d --name cputrackerapp --network cputracker_network -v "$DATABASE_PATH":/app/cputracker.db -v "$TARGET_FOLDER":/app/logs_folder cputrackerapp_image
+
+# Start the Nginx container
+docker run --name nginx4cputrackapp --network cputracker_network -p 80:80 nginx_image

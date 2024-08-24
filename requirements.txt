@@ -3,4 +3,4 @@ Flask
 Flask-Bootstrap
 py7zr
 # alive_progress
-flask-talisman
+Flask-Talisman
