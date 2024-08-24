@@ -8,12 +8,16 @@ RUN chmod +x /docker-entrypoint.sh
 # Copy the Nginx configuration file
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Copy SSL certificates
+COPY certs/localhost.crt /etc/nginx/certs/localhost.crt
+COPY certs/localhost.key /etc/nginx/certs/localhost.key
+
 # # Copy SSL certificates
 # COPY cert.pem /etc/ssl/certs/cert.pem
 # COPY key.pem /etc/ssl/private/key.pem
 
 # Expose port 443 for HTTPS
-EXPOSE 80
+EXPOSE 80 443
 
 # Use the custom entrypoint script
 ENTRYPOINT ["/docker-entrypoint.sh"]

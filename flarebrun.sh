@@ -1,5 +1,10 @@
 #!/bin/zsh
 
+CERT_DIR="./certs"
+CERT_FILE="$CERT_DIR/localhost.crt"
+KEY_FILE="$CERT_DIR/localhost.key"
+
+
 # Stop and remove the existing containers
 docker stop cputrackerapp nginx4cputrackapp
 docker container rm cputrackerapp nginx4cputrackapp
@@ -54,4 +59,4 @@ fi
 docker run -d --name cputrackerapp --network cputracker_network -v "$DATABASE_PATH":/app/cputracker.db -v "$TARGET_FOLDER":/app/logs_folder cputrackerapp_image
 
 # Start the Nginx container
-docker run --name nginx4cputrackapp --network cputracker_network -p 80:80 nginx_image
+docker run -d --name nginx4cputrackapp --network cputracker_network -p 80:80 -p 443:443 -v "$CERT_FILE":/etc/nginx/certs/localhost.crt -v "$KEY_FILE":/etc/nginx/certs/localhost.key nginx_image
