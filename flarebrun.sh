@@ -61,7 +61,7 @@ fi
 
 # Build the images
 docker build -t cputrackerapp_image -f Dockerfile.flask .
-docker build -t nginx_image -f Dockerfile.nginx .
+docker build --build-arg TARGETPLATFORM=arm64 -t nginx_image -f Dockerfile.nginx .
 
 # Create the container network if it doesn't exist
 if ! docker network ls | grep -q cputracker_network; then

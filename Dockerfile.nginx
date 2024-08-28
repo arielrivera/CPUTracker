@@ -1,5 +1,14 @@
 # Dockerfile.nginx
-FROM arm64v8/nginx
+
+# Define a build argument to specify the target platform
+ARG TARGETPLATFORM
+
+# Use a multi-stage build to select the appropriate base image
+FROM arm64v8/nginx AS arm64
+FROM nginx AS amd64
+
+# Use the build argument to select the appropriate stage
+FROM ${TARGETPLATFORM} AS final
 
 # Ensure the entrypoint script is compatible with ARM64
 COPY docker-entrypoint.sh /docker-entrypoint.sh
@@ -11,10 +20,6 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy SSL certificates
 COPY certs/localhost.crt /etc/nginx/certs/localhost.crt
 COPY certs/localhost.key /etc/nginx/certs/localhost.key
-
-# # Copy SSL certificates
-# COPY cert.pem /etc/ssl/certs/cert.pem
-# COPY key.pem /etc/ssl/private/key.pem
 
 # Expose port 443 for HTTPS
 EXPOSE 80 443

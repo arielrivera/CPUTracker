@@ -6,3 +6,4 @@ localhost.crt
 localhost.key
 certs/localhost.crt
 certs/localhost.key
+/certs
