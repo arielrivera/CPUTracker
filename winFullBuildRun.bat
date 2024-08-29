@@ -86,7 +86,7 @@ REM Build the nginx_image image
 docker build --build-arg TARGETPLATFORM=amd64 -t nginx_image -f Dockerfile.nginx .
 REM Start the Nginx container
 docker run ^
---name nginx4cputrackapp ^
+-d --name nginx4cputrackapp ^
 --network cputracker_network ^
 -p 80:80 -p 443:443 ^
 nginx_image
