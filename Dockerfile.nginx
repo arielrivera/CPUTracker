@@ -1,14 +1,15 @@
 # Dockerfile.nginx
 
-# Define a build argument to specify the target platform
-ARG TARGETPLATFORM
+# # Define a build argument to specify the target platform
+# ARG TARGETPLATFORM
+# # Use a multi-stage build to select the appropriate base image
+# FROM arm64v8/nginx AS arm64
+# FROM linux/amd64 AS amd64
+# FROM nginx AS amd64
+# # Use the build argument to select the appropriate stage
+# FROM ${TARGETPLATFORM} AS final
 
-# Use a multi-stage build to select the appropriate base image
-FROM arm64v8/nginx AS arm64
-FROM nginx AS amd64
-
-# Use the build argument to select the appropriate stage
-FROM ${TARGETPLATFORM} AS final
+FROM nginx:latest
 
 # Ensure the entrypoint script is compatible with ARM64
 COPY docker-entrypoint.sh /docker-entrypoint.sh

@@ -59,9 +59,25 @@ if docker images | grep -q nginx_image; then
   docker rmi nginx_image
 fi
 
+# Detect the platform for ngnix mostly
+ARCH=$(uname -m)
+if [ "$ARCH" = "x86_64" ]; then
+  # Intended for MacOS Intel . Yeah, I know it's confusing (Intel/AMD blah blah blah...) 
+  TARGETPLATFORM="linux/amd64"
+elif [ "$ARCH" = "arm64" ]; then
+  # Intended for MacOS Apple Silicon Chip (M1,M2,M3 M*)
+  TARGETPLATFORM="linux/arm64"
+else
+  echo "Unknown architecture: $ARCH"
+  exit 1
+fi
+
+echo "Detected platform: $TARGETPLATFORM"
+
 # Build the images
 docker build -t cputrackerapp_image -f Dockerfile.flask .
-docker build --build-arg TARGETPLATFORM=arm64 -t nginx_image -f Dockerfile.nginx .
+# docker build --build-arg TARGETPLATFORM=arm64 -t nginx_image -f Dockerfile.nginx .
+docker build --platform $TARGETPLATFORM -t nginx_image -f Dockerfile.nginx .
 
 # Create the container network if it doesn't exist
 if ! docker network ls | grep -q cputracker_network; then
@@ -82,6 +98,6 @@ docker run \
 -d --name nginx4cputrackapp \
 --network cputracker_network \
 -p 80:80 -p 443:443 \
--v "$CERT_FILE":/etc/nginx/certs/localhost.crt \
--v "$KEY_FILE":/etc/nginx/certs/localhost.key \
 nginx_image
+# -v "$CERT_FILE":/etc/nginx/certs/localhost.crt \
+# -v "$KEY_FILE":/etc/nginx/certs/localhost.key \
