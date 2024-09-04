@@ -84,13 +84,19 @@
                 <th data-column="part_number">Part Number</th>
                 <th data-column="datecode">Datecode</th>
                 <th data-column="country">Country</th>
-                <th class="raw-failure-column" data-column="raw_failure">Raw Failure</th>
+                <th class="raw-failure-column" data-column="raw_failure">Raw Failure
+                    <span class="font-size-controls">
+                        <img src="static/increase-font.svg" alt="Increase Font" id="increase-font" width="15" height="15" style="cursor: pointer;">
+                        <img src="static/decrease-font.svg" alt="Decrease Font" id="decrease-font" width="15" height="15" style="cursor: pointer;">
+                    </span>
+
+                </th>
                 <th data-column="test_result">Result</th>
                 <th data-column="lkt">Last Known Test</th>
             </tr>
         </thead>
         <tbody>
-            {% if units %}
+            <!-- {% if units %}
                 {% for unit in units %}
                 <tr record_id="{{ unit.id }}">
                     <td class="text-nowrap">{{ unit.date_added }}</td>
@@ -108,7 +114,7 @@
                 <tr>
                 <td colspan="4">No units found.</td>
                 </tr>
-            {% endif %}
+            {% endif %} -->
         </tbody>
     </table>
 
@@ -429,8 +435,9 @@ function setMode(mode) {
                                     <td>${lktDatetime}</td>
                                 </tr>
                             `);
-                            toggleRawFailureColumn('');
+                            
                         });
+                        toggleRawFailureColumn('');
                     }
                 });
             }
@@ -996,4 +1003,21 @@ function setMode(mode) {
 
     
 
+</script>
+<script>
+    $(document).ready(function() {
+        $('#increase-font').on('click', function() {
+            $('.raw-failure-column').each(function() {
+                let currentSize = parseFloat($(this).css('font-size'));
+                $(this).css('font-size', (currentSize + 5) + 'px');
+            });
+        });
+
+        $('#decrease-font').on('click', function() {
+            $('.raw-failure-column').each(function() {
+                let currentSize = parseFloat($(this).css('font-size'));
+                $(this).css('font-size', (currentSize - 5) + 'px');
+            });
+        });
+    });
 </script>

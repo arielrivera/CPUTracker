@@ -39,59 +39,23 @@ if not exist "%TARGET_FOLDER%" (
     )
 )
 
-REM Create the container network if it doesn't exist
-docker network ls | findstr cputracker_network >nul
-if %errorlevel% neq 0 (
-    docker network create cputracker_network
-)
+REM Export the TARGET_FOLDER environment variable
+set "TARGET_FOLDER=%TARGET_FOLDER%"
+set "TARGET_FOLDER=%TARGET_FOLDER%" > .env
 
 REM Stop and remove the existing containers
-docker ps -a | findstr cputrackerapp >nul
-if %errorlevel% equ 0 (
-    docker stop cputrackerapp
-    docker container rm cputrackerapp
-)
+docker-compose -p proj_cputracker down
 
-docker ps -a | findstr nginx4cputrackapp >nul
-if %errorlevel% equ 0 (
-    docker stop nginx4cputrackapp
-    docker container rm nginx4cputrackapp
-)
+REM Explicitly stop and remove any existing containers with the same name
+docker rm -f cputrackerapp
+docker rm -f nginx4cputrackapp
 
-REM Remove all images
-docker images | findstr cputrackerapp_image >nul
-if %errorlevel% equ 0 (
-    docker rmi cputrackerapp_image
-)
+REM Remove all images forcefully
+docker rmi -f cputrackerapp_image
+docker rmi -f nginx4cputracker_image
 
-docker images | findstr nginx_image >nul
-if %errorlevel% equ 0 (
-    docker rmi nginx_image
-)
-
-REM Build the cputrackerapp image
-docker build -t cputrackerapp_image -f Dockerfile.flask .
-
-
-REM Start the cputrackerapp Flask container 
-docker run ^
--d --name cputrackerapp ^
---network cputracker_network ^
--v "%DATABASE_PATH%":/app/cputracker.db ^
--v "%TARGET_FOLDER%":/app/logs_folder ^
-cputrackerapp_image
-
-
-REM Build the nginx_image image
-docker build --build-arg TARGETPLATFORM=amd64 -t nginx_image -f Dockerfile.nginx .
-REM Start the Nginx container
-docker run ^
--d --name nginx4cputrackapp ^
---network cputracker_network ^
--p 80:80 -p 443:443 ^
-nginx_image
-@REM -v "%CERT_FILE%":/etc/nginx/certs/localhost.crt ^
-@REM -v "%KEY_FILE%":/etc/nginx/certs/localhost.key ^
+REM Start the services using Docker Compose
+docker-compose -p proj_cputracker up -d
 
 endlocal
 @echo on

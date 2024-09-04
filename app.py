@@ -47,7 +47,8 @@ def home():
     units = db.execute('SELECT * FROM UNITS ORDER BY date_added DESC LIMIT 10').fetchall()
     parts = db.execute('SELECT part_number FROM PARTS WHERE enabled = 1').fetchall()
     db.close()
-    return render_template('home.html', units=units, parts=parts)
+    return render_template('home.html', parts=parts)
+# units=units, 
 
 @app.route('/get_records', methods=['GET'])
 def get_records():
@@ -365,6 +366,7 @@ def add():
     search_box = request.form.get('searchBox')
     part_number = request.form.get('partNumber')
     composite_snpn = request.form.get('compositeSNPN')
+    test_result = "Unknown"
    
     if not search_box or not part_number:
         return jsonify(success=False, message="Missing data"), 400
@@ -375,7 +377,7 @@ def add():
     cursor = conn.cursor()
 
     try:
-        cursor.execute('INSERT INTO units (serial_number, part_number, composite_snpn) VALUES (?, ?, ?)', (search_box, part_number, composite_snpn))
+        cursor.execute('INSERT INTO units (serial_number, part_number, composite_snpn, test_result) VALUES (?, ?, ?, ?)', (search_box, part_number, composite_snpn, test_result))
         conn.commit()
         success = True
     except Exception as e:
@@ -386,7 +388,7 @@ def add():
         conn.close()
 
     if success:
-        return jsonify(success=True, message="Unit added successfully")
+        return jsonify(success=True, message=f"{search_box} added successfully")
     else:
         return jsonify(success=False, message=message)
 

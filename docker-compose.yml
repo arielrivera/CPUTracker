@@ -1,22 +1,33 @@
-version: '3'
-
 services:
-  flask_app:
+  web:
     build:
       context: .
       dockerfile: Dockerfile.flask
+    image: cputrackerapp_image
+    container_name: cputrackerapp
     volumes:
-      - ./logs:/app/logs
-    ports:
-      - "5001:5001"
-    environment:
-      - FLASK_ENV=development
+      - ./certs:/app/certs
+      - ./database:/app/database
+      - ${TARGET_FOLDER}:/app/logs_folder
+    networks:
+      - cputracker_network
 
   nginx:
     build:
       context: .
       dockerfile: Dockerfile.nginx
+    image: nginx4cputracker_image
+    container_name: nginx4cputrackapp
     ports:
+      - "80:80"
       - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs
     depends_on:
-      - flask_app
+      - web
+    networks:
+      - cputracker_network
+
+networks:
+  cputracker_network:
+    driver: bridge
