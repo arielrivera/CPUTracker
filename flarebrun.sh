@@ -25,7 +25,12 @@ if [ ! -d "$TARGET_FOLDER" ]; then
   if [ -n "$USER_FOLDER" ]; then
     TARGET_FOLDER="$USER_FOLDER"
     # FUTURE: Implement user-provided path validation, foolproof it
-    echo "Using provided folder: $TARGET_FOLDER"
+    if [ ! -d "$TARGET_FOLDER" ]; then
+      echo "The provided folder does not exist or is not valid."
+      TARGET_FOLDER="$TEMP_FOLDER"
+    else
+      echo "Using provided folder: $TARGET_FOLDER"
+    fi
   else
     # Use the temporary folder if no folder is provided
     TARGET_FOLDER="$TEMP_FOLDER"
@@ -37,67 +42,21 @@ if [ ! -d "$TARGET_FOLDER" ]; then
     fi
   fi
 fi
-# ----------------------------------------------------------
-#      Docker
-# ----------------------------------------------------------
+
+# Export the TARGET_FOLDER environment variable
+export TARGET_FOLDER="$TARGET_FOLDER"
+echo "TARGET_FOLDER=$TARGET_FOLDER" > .env
 
 # Stop and remove the existing containers
-if docker ps -a | grep -q cputrackerapp; then
-  docker stop cputrackerapp
-  docker container rm cputrackerapp
-fi
-if docker ps -a | grep -q nginx4cputrackapp; then
-  docker stop nginx4cputrackapp
-  docker container rm nginx4cputrackapp
-fi
+docker compose -p proj_cputracker down
 
-# Remove all images
-if docker images | grep -q cputrackerapp_image; then
-  docker rmi cputrackerapp_image
-fi
-if docker images | grep -q nginx_image; then
-  docker rmi nginx_image
-fi
+# Explicitly stop and remove any existing containers with the same name
+docker rm -f cputrackerapp
+docker rm -f nginx4cputrackapp
 
-# Detect the platform for ngnix mostly
-ARCH=$(uname -m)
-if [ "$ARCH" = "x86_64" ]; then
-  # Intended for MacOS Intel . Yeah, I know it's confusing (Intel/AMD blah blah blah...) 
-  TARGETPLATFORM="linux/amd64"
-elif [ "$ARCH" = "arm64" ]; then
-  # Intended for MacOS Apple Silicon Chip (M1,M2,M3 M*)
-  TARGETPLATFORM="linux/arm64"
-else
-  echo "Unknown architecture: $ARCH"
-  exit 1
-fi
+# Remove all images forcefully
+docker rmi -f cputrackerapp_image
+docker rmi -f nginx4cputracker_image
 
-echo "Detected platform: $TARGETPLATFORM"
-
-# Build the images
-docker build -t cputrackerapp_image -f Dockerfile.flask .
-# docker build --build-arg TARGETPLATFORM=arm64 -t nginx_image -f Dockerfile.nginx .
-docker build --platform $TARGETPLATFORM -t nginx_image -f Dockerfile.nginx .
-
-# Create the container network if it doesn't exist
-if ! docker network ls | grep -q cputracker_network; then
-  docker network create cputracker_network
-fi
-
-# Start the Flask container
-docker run \
--d --name cputrackerapp \
---network cputracker_network \
--v "$DATABASE_PATH":/app/cputracker.db \
--v "$TARGET_FOLDER":/app/logs_folder \
-cputrackerapp_image
-
-
-# Start the Nginx container
-docker run \
--d --name nginx4cputrackapp \
---network cputracker_network \
--p 80:80 -p 443:443 \
-nginx_image
-# -v "$CERT_FILE":/etc/nginx/certs/localhost.crt \
-# -v "$KEY_FILE":/etc/nginx/certs/localhost.key \
+# Start the services using Docker Compose
+docker compose -p proj_cputracker up -d
