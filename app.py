@@ -5,8 +5,10 @@ from flask_bootstrap import Bootstrap
 from datetime import datetime
 import subprocess
 
-sys.path.append('./utils')
+# sys.path.append('./utils')
 # from utils.process_logs import start_process, stop_process
+
+DB_PATH = '/app/database/cputracker.db'
 
 app = Flask(__name__)
 
@@ -18,7 +20,7 @@ bootstrap = Bootstrap(app)
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        db = g._database = sqlite3.connect('cputracker.db')
+        db = g._database = sqlite3.connect(DB_PATH)
         db.row_factory = sqlite3.Row  # This allows us to access columns by name
     return db
 

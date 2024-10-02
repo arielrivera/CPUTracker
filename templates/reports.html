@@ -176,7 +176,7 @@
                     if (response.results && Array.isArray(response.results)) {
                         // Clear existing table rows
                         $('#adv-search-results tbody').empty();
-                        var rowcount=0;
+                        var rowcount=1;
                         response.results.forEach(result => {
                             if (result.serial_number && result.part_number) {
                                 // Append new rows to the table
