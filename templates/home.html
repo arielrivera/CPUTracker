@@ -206,6 +206,7 @@
                                 <option value="VM/PPS">Scrap (VM/PPS)</option>
                                 <option value="TESTING">Test in progress</option>
                                 <option value="Unknown">Unknown</option>
+                                <option value="Ineligible">Ineligible</option>
                                 <!-- <option value="NFF">NFF</option>
                                 <option value="VF">VF</option>
                                 <option value="VM/PPS">VM/PPS</option>
@@ -804,6 +805,8 @@ function setMode(mode) {
                         return 'table-warning';
                     case 'testing':
                         return 'table-info';
+                    case 'inelegible':
+                        return 'table-dark';
                     default:
                         return 'table-secondary';
                 }
