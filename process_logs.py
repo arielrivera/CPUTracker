@@ -11,7 +11,7 @@ WRITABLE_TEMP_DIR = '/tmp/cputracker_temp'
 process_running = False
 
 def get_db():
-    db = sqlite3.connect('cputracker.db')
+    db = sqlite3.connect('/app/database/cputracker.db')
     db.row_factory = sqlite3.Row  # This allows us to access columns by name
     return db
 
