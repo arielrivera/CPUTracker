@@ -48,8 +48,9 @@ def home():
     db = get_db()
     units = db.execute('SELECT * FROM UNITS ORDER BY date_added DESC LIMIT 10').fetchall()
     parts = db.execute('SELECT part_number FROM PARTS WHERE enabled = 1').fetchall()
+    test_results = db.execute('SELECT DISTINCT test_result FROM UNITS').fetchall()
     db.close()
-    return render_template('home.html', parts=parts)
+    return render_template('home.html', parts=parts, test_results=test_results)
 # units=units, 
 
 @app.route('/get_records', methods=['GET'])
