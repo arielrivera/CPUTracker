@@ -670,8 +670,7 @@ function setMode(mode) {
             
             $('#rawFailure').val(row.eq(5).text());
             $('#editModal').modal('show');
-            $('#testResult').val(testResultText)
-            $('#testResult').val(testResultText).change();
+            $('#testResult').val(testResultText.trim()).change();
         });
 
     
