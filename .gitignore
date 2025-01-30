@@ -7,3 +7,4 @@ localhost.key
 certs/localhost.crt
 certs/localhost.key
 /certs
+.DS_Store
