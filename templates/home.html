@@ -45,6 +45,27 @@
     </form>
 </div>
 
+<!-- Add this right after your navbar -->
+<div id="update-notification-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    <div id="update-notification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">Database Updates</strong>
+            <small class="text-muted">just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            New changes detected in the database.
+            <div class="mt-2 pt-2 border-top">
+                <button type="button" class="btn btn-primary btn-sm" id="refresh-table-btn">
+                    Refresh Table
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="toast">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="container-fluid">
     <div id="notification" class="alert alert-primary alert-dismissible fade notification" role="alert">
@@ -83,13 +104,7 @@
                 <th data-column="part_number">Part Number</th>
                 <th data-column="datecode">Datecode</th>
                 <th data-column="country">Country</th>
-                <th class="raw-failure-column" data-column="raw_failure">Raw Failure
-                    <span class="font-size-controls">
-                        <img src="static/increase-font.svg" alt="Increase Font" id="increase-font" width="15" height="15" style="cursor: pointer;">
-                        <img src="static/decrease-font.svg" alt="Decrease Font" id="decrease-font" width="15" height="15" style="cursor: pointer;">
-                    </span>
-
-                </th>
+                <th data-column="raw_failure" class="raw-failure-column">Raw Failure</th>
                 <th data-column="test_result">Result</th>
                 <th data-column="lkt">Last Known Test</th>
             </tr>
@@ -723,15 +738,56 @@ function setMode(mode) {
         });
 
         // Handle datecode input for suggestions
+        let isSelectionMade = false;
+        let inputTimeout;
+
         $('#datecode').on('input', function() {
-            const query = $(this).val();
-            fetchDatecodeSuggestions(query).done(function(data) {
-                const suggestions = $('#datecodeSuggestions');
-                suggestions.empty();
-                data.forEach(datecode => {
-                    suggestions.append(new Option(datecode, datecode));
-                });
-            });
+            console.log('Input event triggered, isSelectionMade:', isSelectionMade);
+            if (!isSelectionMade) {
+                const query = $(this).val();
+                console.log('Fetching suggestions for query:', query);
+                
+                // Clear any existing timeout
+                if (inputTimeout) {
+                    clearTimeout(inputTimeout);
+                }
+                
+                // Set a new timeout to fetch suggestions
+                inputTimeout = setTimeout(() => {
+                    fetchDatecodeSuggestions(query).done(function(data) {
+                        const suggestions = $('#datecodeSuggestions');
+                        suggestions.empty();
+                        data.forEach(datecode => {
+                            suggestions.append(new Option(datecode, datecode));
+                        });
+                    });
+                }, 300); // 300ms delay
+            } else {
+                console.log('Skipping suggestions fetch because isSelectionMade is true');
+            }
+        });
+
+        // Clear suggestions when a selection is made
+        $('#datecode').on('change', function() {
+            console.log('Change event triggered, setting isSelectionMade to true');
+            isSelectionMade = true;
+            const suggestions = $('#datecodeSuggestions');
+            suggestions.empty();
+            
+            // Clear any pending timeout
+            if (inputTimeout) {
+                clearTimeout(inputTimeout);
+                inputTimeout = null;
+            }
+        });
+
+        // Reset the flag when the user starts typing again
+        $('#datecode').on('keydown', function(e) {
+            // Only reset if it's not an arrow key or enter
+            if (![37, 38, 39, 40, 13].includes(e.keyCode)) {
+                console.log('Keydown event triggered, setting isSelectionMade to false');
+                isSelectionMade = false;
+            }
         });
     
         // Handle save changes button click
@@ -1002,18 +1058,123 @@ function setMode(mode) {
 </script>
 <script>
     $(document).ready(function() {
-        $('#increase-font').on('click', function() {
-            $('.raw-failure-column').each(function() {
-                let currentSize = parseFloat($(this).css('font-size'));
-                $(this).css('font-size', (currentSize + 5) + 'px');
-            });
-        });
-
-        $('#decrease-font').on('click', function() {
-            $('.raw-failure-column').each(function() {
-                let currentSize = parseFloat($(this).css('font-size'));
-                $(this).css('font-size', (currentSize - 5) + 'px');
-            });
-        });
+        // Setup SSE connection
+        setupSSE();
     });
+
+    function setupSSE() {
+        // Create EventSource connection
+        const evtSource = new EventSource("/units-stream");
+        
+        // Handle connection open
+        evtSource.onopen = function() {
+            console.log('SSE connection established');
+        };
+
+        // Handle messages
+        evtSource.onmessage = function(event) {
+            console.log('Update received:', event.data);
+            const update = JSON.parse(event.data);
+            handleDatabaseUpdate(update);
+        };
+
+        // Handle errors
+        evtSource.onerror = function(err) {
+            console.error('SSE connection error:', err);
+            // Try to reconnect after 5 seconds
+            setTimeout(() => setupSSE(), 5000);
+        };
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            evtSource.close();
+        });
+    }
+
+    function handleDatabaseUpdate(update) {
+        // Don't show notification if user is currently editing
+        if (isUserEditing()) {
+            console.log('Update received but user is editing, storing for later');
+            storeUpdateNotification(update);
+            return;
+        }
+
+        showUpdateNotification(update);
+    }
+
+    function isUserEditing() {
+        return (
+            $('#editModal').is(':visible') ||
+            $('#addPartModal').is(':visible') ||
+            $('#datecode').is(':focus') ||
+            document.activeElement.tagName === 'TEXTAREA'
+        );
+    }
+
+    function showUpdateNotification(update) {
+        // Get the notification elements
+        const toast = $('#update-notification');
+        const toastBody = toast.find('.toast-body');
+        
+        // Update the content
+        toastBody.html(`
+            ${update.message || 'New changes detected in the database.'}
+            <div class="mt-2 pt-2 border-top">
+                <button type="button" class="btn btn-primary btn-sm" id="refresh-table-btn">
+                    Refresh Table
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="toast">
+                    Dismiss
+                </button>
+            </div>
+        `);
+
+        // Show the toast
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        // Handle refresh button click
+        $('#refresh-table-btn').off('click').on('click', function() {
+            refreshTableData();
+            bsToast.hide();
+        });
+    }
+
+    function refreshTableData() {
+        const recordsPerPage = getCookie('recordsPerPage') || 10;
+        updateTable(recordsPerPage);
+    }
+
+    // Store notifications when user is editing
+    let pendingUpdates = [];
+
+    function storeUpdateNotification(update) {
+        pendingUpdates.push(update);
+        updatePendingBadge();
+    }
+
+    function updatePendingBadge() {
+        // Remove existing badge
+        $('#pending-updates-badge').remove();
+        
+        if (pendingUpdates.length > 0) {
+            // Add badge to navbar
+            const badge = $(`
+                <span id="pending-updates-badge" class="position-fixed top-0 end-0 badge bg-warning m-2">
+                    ${pendingUpdates.length} pending updates
+                </span>
+            `).appendTo('body');
+
+            // Make badge clickable to show updates
+            badge.css('cursor', 'pointer').click(function() {
+                if (!isUserEditing()) {
+                    showUpdateNotification({
+                        message: `There are ${pendingUpdates.length} pending updates to display.`
+                    });
+                    pendingUpdates = [];
+                    updatePendingBadge();
+                }
+            });
+        }
+    }
 </script>

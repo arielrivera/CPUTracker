@@ -1,14 +1,21 @@
-from flask import Flask, g, request, render_template, Response, jsonify, session, redirect, url_for, make_response, flash
+from flask import Flask, g, request, render_template, Response, jsonify, session, redirect, url_for, make_response, flash, stream_with_context
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3 , os, shutil, sqlite3, py7zr, sys, zlib, glob
 from flask_bootstrap import Bootstrap
 from datetime import datetime
 import subprocess
+import json
 
 # sys.path.append('./utils')
 # from utils.process_logs import start_process, stop_process
 
 DB_PATH = '/app/database/cputracker.db'
+
+def get_db():
+    if 'db' not in g:
+        g.db = sqlite3.connect(DB_PATH)
+        g.db.row_factory = sqlite3.Row
+    return g.db
 
 app = Flask(__name__)
 
@@ -16,18 +23,9 @@ app.secret_key = 'AMD'
 # Initialize Bootstrap
 bootstrap = Bootstrap(app)
 
-
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DB_PATH)
-        db.row_factory = sqlite3.Row  # This allows us to access columns by name
-    return db
-
-
 @app.teardown_appcontext
 def close_connection(exception):
-    db = getattr(g, '_database', None)
+    db = getattr(g, 'db', None)
     if db is not None:
         db.close()
 
@@ -450,7 +448,6 @@ def update_record():
     test_result = data['test_result']
     raw_failure = data['raw_failure']
 
-
     conn = get_db()
     cursor = conn.cursor()
     try:
@@ -461,7 +458,7 @@ def update_record():
         ''', (composite_snpn, serial_number, part_number, datecode, country, test_result, raw_failure, record_id))
         conn.commit()
         conn.close()
-        return jsonify(success=True)
+        return jsonify({'success': True})
     except sqlite3.IntegrityError as e:
         conn.close()
         return jsonify(success=False, error=str(e))
