@@ -5,11 +5,19 @@ from flask_bootstrap import Bootstrap
 from datetime import datetime
 import subprocess
 import json
+from queue import Queue
+import threading
+from functools import wraps
 
 # sys.path.append('./utils')
 # from utils.process_logs import start_process, stop_process
 
-DB_PATH = '/app/database/cputracker.db'
+# Use environment variable to switch between development and production
+DB_PATH = os.getenv('CPUTRACKER_DB_PATH', '/app/database/cputracker.db')
+
+# Add this near the top with other global variables
+update_queues = []
+last_update_time = datetime.now()
 
 def get_db():
     if 'db' not in g:
@@ -23,12 +31,60 @@ app.secret_key = 'AMD'
 # Initialize Bootstrap
 bootstrap = Bootstrap(app)
 
+# Add these new functions before any routes
+def notify_clients():
+    """Notify all connected clients about a database update"""
+    global last_update_time
+    last_update_time = datetime.now()
+    dead_queues = []
+    
+    for queue in update_queues:
+        try:
+            queue.put_nowait(last_update_time.isoformat())
+        except:
+            dead_queues.append(queue)
+    
+    # Clean up dead queues
+    for queue in dead_queues:
+        if queue in update_queues:
+            update_queues.remove(queue)
+
+@app.route('/stream')
+def stream():
+    """SSE endpoint for real-time updates"""
+    def event_stream():
+        queue = Queue()
+        update_queues.append(queue)
+        
+        try:
+            while True:
+                # Send initial timestamp
+                if len(update_queues) == 1:  # If this is the first connection
+                    yield f"data: {last_update_time.isoformat()}\n\n"
+                
+                # Wait for new updates
+                update_time = queue.get()
+                yield f"data: {update_time}\n\n"
+        except GeneratorExit:
+            if queue in update_queues:
+                update_queues.remove(queue)
+    
+    return Response(event_stream(), mimetype='text/event-stream')
+
+def notify_if_units_changed(func):
+    """Decorator to notify clients if the UNITS table is modified"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        notify_clients()  # Notify clients after successful database modification
+        return result
+    return wrapper
+
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, 'db', None)
     if db is not None:
         db.close()
-
 
 @app.route('/')
 def index():
@@ -53,7 +109,14 @@ def home():
 
 @app.route('/get_records', methods=['GET'])
 def get_records():
+    """Modified to include timestamp"""
     records_per_page = request.args.get('recordsPerPage', '10')
+    last_update = request.args.get('last_update')
+    
+    # If client's last update matches server's, return no content
+    if last_update and datetime.fromisoformat(last_update) >= last_update_time:
+        return jsonify({'no_change': True})
+    
     db = get_db()
     
     if records_per_page == 'all':
@@ -66,10 +129,11 @@ def get_records():
     
     db.close()
     
-    # Convert records to a list of dictionaries
     records_list = [dict(record) for record in records]
-    
-    return jsonify({'records': records_list})
+    return jsonify({
+        'records': records_list,
+        'timestamp': last_update_time.isoformat()
+    })
 
 @app.route('/logs')
 def logs():
@@ -363,6 +427,7 @@ def advanced_search():
     return jsonify(results=[dict(row) for row in results])
 
 @app.route('/add', methods=['POST'])
+@notify_if_units_changed
 def add():
     search_box = request.form.get('searchBox')
     part_number = request.form.get('partNumber')
@@ -437,6 +502,7 @@ def get_datecode_suggestions():
     return jsonify(suggestions)
 
 @app.route('/update_record', methods=['POST'])
+@notify_if_units_changed
 def update_record():
     data = request.form
     record_id = data['record_id']
@@ -509,6 +575,7 @@ def read_audit():
 
 
 @app.route('/delete_record', methods=['POST'])
+@notify_if_units_changed
 def delete_record():
     record_id = request.form['id']
     success = delete_record_from_database(record_id)
@@ -599,5 +666,86 @@ def truncate_logs():
 
 app.jinja_env.add_extension('jinja2.ext.do')
 
+def init_db():
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Create users table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            enabled INTEGER DEFAULT 1,
+            is_admin INTEGER DEFAULT 0
+        )
+    ''')
+    
+    # Create UNITS table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS UNITS (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            serial_number TEXT,
+            part_number TEXT,
+            datecode TEXT,
+            country TEXT,
+            test_result TEXT,
+            composite_snpn TEXT,
+            raw_failure TEXT,
+            lkt_datetime TIMESTAMP
+        )
+    ''')
+    
+    # Create PARTS table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS PARTS (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            part_number TEXT UNIQUE,
+            enabled INTEGER DEFAULT 1
+        )
+    ''')
+    
+    # Create LOGS table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS LOGS (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_name TEXT,
+            serial_number TEXT,
+            host_status TEXT,
+            csv_file_name TEXT,
+            csv_file_content BLOB
+        )
+    ''')
+    
+    # Create AUDIT table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS AUDIT (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            message TEXT,
+            audit_type TEXT,
+            date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Create a default admin user if none exists
+    cursor.execute('SELECT COUNT(*) FROM users')
+    if cursor.fetchone()[0] == 0:
+        from werkzeug.security import generate_password_hash
+        admin_password = generate_password_hash('admin')
+        cursor.execute('INSERT INTO users (username, password, enabled, is_admin) VALUES (?, ?, 1, 1)', ('admin', admin_password))
+    
+    conn.commit()
+    conn.close()
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Check if running in development mode
+    if os.getenv('FLASK_ENV') == 'development':
+        # Allow specifying a custom database path for development
+        dev_db_path = os.getenv('DEV_DB_PATH')
+        if dev_db_path:
+            DB_PATH = dev_db_path
+        app.run(debug=True, host='127.0.0.1', port=5000)
+    else:
+        # Use production settings
+        app.run(debug=False)

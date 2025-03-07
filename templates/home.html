@@ -45,28 +45,6 @@
     </form>
 </div>
 
-<!-- Add this right after your navbar -->
-<div id="update-notification-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-    <div id="update-notification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-            <strong class="me-auto">Database Updates</strong>
-            <small class="text-muted">just now</small>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            New changes detected in the database.
-            <div class="mt-2 pt-2 border-top">
-                <button type="button" class="btn btn-primary btn-sm" id="refresh-table-btn">
-                    Refresh Table
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="toast">
-                    Dismiss
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="container-fluid">
     <div id="notification" class="alert alert-primary alert-dismissible fade notification" role="alert">
         Text copied to clipboard!
@@ -307,9 +285,96 @@
 </div>
 
 <script>
+// Shared utility functions
+function getRowClass(testResult) {
+    switch (testResult.toLowerCase()) {
+        case 'unknown':
+            return 'table-light';
+        case 'nff':
+            return 'table-success';
+        case 'vf':
+            return 'table-danger';
+        case 'vm/pps':
+            return 'table-warning';
+        case 'testing':
+            return 'table-info';
+        case 'inelegible':
+            return 'table-dark';
+        default:
+            return 'table-secondary';
+    }
+}
 
+// Function to show/hide the Raw Failure column
+function toggleRawFailureColumn(show) {
+    console.log('toggleRawFailureColumn executed with ' + show);
+    if (show) {
+        $(".raw-failure-column").show();
+        $(".cell-content").show();
+    } else {
+        $(".raw-failure-column").hide();
+        $(".cell-content").hide();
+    }
+}
 
+// Cookie utility functions
+function setCookie(name, value, days) {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+}
 
+function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+
+// Table update utility functions
+function updateTable(recordsPerPage) {
+    setCookie('recordsPerPage', recordsPerPage, 30);
+    $.ajax({
+        url: '/get_records',
+        method: 'GET',
+        data: { 
+            recordsPerPage: recordsPerPage
+        },
+        success: function(data) {
+            $('#home_results_table tbody').empty();
+
+            data.records.forEach(record => {
+                let lktDatetime = record.lkt_datetime ? record.lkt_datetime : '';
+                $('#home_results_table tbody').append(`
+                    <tr comp_snpn="${record.composite_snpn}" record_id="${record.id}" class="${getRowClass(record.test_result)}">
+                        <td class="text-nowrap">${record.date_added}</td>
+                        <td>${record.serial_number}</td>
+                        <td class="text-nowrap">${record.part_number}</td>
+                        <td>${record.datecode}</td>
+                        <td>${record.country}</td>
+                        <td class="raw-failure-column"><span class="cell-content">${record.raw_failure}</span></td>
+                        <td class="result-cell" rescell_sn="${record.serial_number}">${record.test_result} <img class="result-icon" src="static/alert-circle.svg" alt="Alert Icon" width="15" height="15"></td>
+                        <td>${lktDatetime}</td>
+                    </tr>
+                `);
+            });
+            toggleRawFailureColumn($("#show-raw-failures").is(":checked"));
+        }
+    });
+}
+
+function refreshTableData() {
+    const recordsPerPage = getCookie('recordsPerPage') || 10;
+    updateTable(recordsPerPage);
+}
 
 function setMode(mode) {
             const searchBox = document.getElementById('searchMode');
@@ -415,49 +480,9 @@ function setMode(mode) {
         // Sorting table related functions end
 
         $('#recordsPerPage').on('change', function() {
-                const selectedValue = $(this).val();
-                updateTable(selectedValue);
-            });
-
-            function updateTable(recordsPerPage) {
-                setCookie('recordsPerPage', recordsPerPage, 30); // Store preference in a cookie for 30 days
-                $.ajax({
-                    url: '/get_records',
-                    method: 'GET',
-                    data: { recordsPerPage: recordsPerPage },
-                    success: function(data) {
-                        // Clear the table
-                        $('#home_results_table tbody').empty();
-
-                        // Populate the table with the fetched data
-                        data.records.forEach(record => {
-                            // Handle ugly nulls 
-                            let lktDatetime = record.lkt_datetime ? record.lkt_datetime : '';
-                            $('#home_results_table tbody').append(`
-                                <tr comp_snpn="${record.composite_snpn}" record_id="${record.id}" class="${getRowClass(record.test_result)}">
-                                    <td class="text-nowrap">${record.date_added}</td>
-                                    <td>${record.serial_number}</td>
-                                    <td class="text-nowrap">${record.part_number}</td>
-                                    <td>${record.datecode}</td>
-                                    <td>${record.country}</td>
-                                    <td class="raw-failure-column"><span class="cell-content">${record.raw_failure}</span></td>
-                                    <td class="result-cell" rescell_sn="${record.serial_number}">${record.test_result} <img class="result-icon" src="static/alert-circle.svg" alt="Alert Icon" width="15" height="15"></td>
-                                    <td>${lktDatetime}</td>
-                                </tr>
-                            `);
-                            
-                        });
-                        toggleRawFailureColumn('');
-                    }
-                });
-            }
-
-        // // Edit Modal dismiss button click event
-        // function handleDismiss() {
-        //         console.log('Dismiss button has been clicked');
-        //         updateTable(getCookie('recordsPerPage'));
-        //         // Add your custom logic here
-        // }
+            const selectedValue = $(this).val();
+            updateTable(selectedValue);
+        });
 
         // Get the recordsPerPage from the cookie
         const recordsPerPage = getCookie('recordsPerPage') || 10; // Default to 10 if no cookie is found
@@ -813,11 +838,10 @@ function setMode(mode) {
                 success: function(response) {
                     // Hide spinner
                     $('#saveChangesButton').prop('disabled', false).text('Save changes');
+                    
                     if (response.success) {
                         showAlert('Changes saved successfully.', 'success');
-                        // $('#editModal').modal('hide');
-                        // Maybe update/refresh the table row with new data
-                        
+                        refreshTableData();
                     } else {
                         showAlert('Failed to save changes: ' + response.error, 'danger');
                     }
@@ -904,18 +928,6 @@ function setMode(mode) {
         // setCookie("show_raw_failures", isChecked, 30); // Save for 30 days
         toggleRawFailureColumn(isChecked);
     });
-
-    // Function to show/hide the Raw Failure column
-    function toggleRawFailureColumn(show) {
-        console.log('toggleRawFailureColumn executed with ' + show)
-        if (show) {
-            $(".raw-failure-column").show();
-            $(".cell-content").show();
-        } else {
-            $(".raw-failure-column").hide();
-            $(".cell-content").hide();
-        }
-    }
 
     // RawFailures column handling ends
 
@@ -1055,126 +1067,4 @@ function setMode(mode) {
 
     
 
-</script>
-<script>
-    $(document).ready(function() {
-        // Setup SSE connection
-        setupSSE();
-    });
-
-    function setupSSE() {
-        // Create EventSource connection
-        const evtSource = new EventSource("/units-stream");
-        
-        // Handle connection open
-        evtSource.onopen = function() {
-            console.log('SSE connection established');
-        };
-
-        // Handle messages
-        evtSource.onmessage = function(event) {
-            console.log('Update received:', event.data);
-            const update = JSON.parse(event.data);
-            handleDatabaseUpdate(update);
-        };
-
-        // Handle errors
-        evtSource.onerror = function(err) {
-            console.error('SSE connection error:', err);
-            // Try to reconnect after 5 seconds
-            setTimeout(() => setupSSE(), 5000);
-        };
-
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            evtSource.close();
-        });
-    }
-
-    function handleDatabaseUpdate(update) {
-        // Don't show notification if user is currently editing
-        if (isUserEditing()) {
-            console.log('Update received but user is editing, storing for later');
-            storeUpdateNotification(update);
-            return;
-        }
-
-        showUpdateNotification(update);
-    }
-
-    function isUserEditing() {
-        return (
-            $('#editModal').is(':visible') ||
-            $('#addPartModal').is(':visible') ||
-            $('#datecode').is(':focus') ||
-            document.activeElement.tagName === 'TEXTAREA'
-        );
-    }
-
-    function showUpdateNotification(update) {
-        // Get the notification elements
-        const toast = $('#update-notification');
-        const toastBody = toast.find('.toast-body');
-        
-        // Update the content
-        toastBody.html(`
-            ${update.message || 'New changes detected in the database.'}
-            <div class="mt-2 pt-2 border-top">
-                <button type="button" class="btn btn-primary btn-sm" id="refresh-table-btn">
-                    Refresh Table
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="toast">
-                    Dismiss
-                </button>
-            </div>
-        `);
-
-        // Show the toast
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-
-        // Handle refresh button click
-        $('#refresh-table-btn').off('click').on('click', function() {
-            refreshTableData();
-            bsToast.hide();
-        });
-    }
-
-    function refreshTableData() {
-        const recordsPerPage = getCookie('recordsPerPage') || 10;
-        updateTable(recordsPerPage);
-    }
-
-    // Store notifications when user is editing
-    let pendingUpdates = [];
-
-    function storeUpdateNotification(update) {
-        pendingUpdates.push(update);
-        updatePendingBadge();
-    }
-
-    function updatePendingBadge() {
-        // Remove existing badge
-        $('#pending-updates-badge').remove();
-        
-        if (pendingUpdates.length > 0) {
-            // Add badge to navbar
-            const badge = $(`
-                <span id="pending-updates-badge" class="position-fixed top-0 end-0 badge bg-warning m-2">
-                    ${pendingUpdates.length} pending updates
-                </span>
-            `).appendTo('body');
-
-            // Make badge clickable to show updates
-            badge.css('cursor', 'pointer').click(function() {
-                if (!isUserEditing()) {
-                    showUpdateNotification({
-                        message: `There are ${pendingUpdates.length} pending updates to display.`
-                    });
-                    pendingUpdates = [];
-                    updatePendingBadge();
-                }
-            });
-        }
-    }
 </script>
