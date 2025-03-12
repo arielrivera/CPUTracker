@@ -562,6 +562,15 @@ function setMode(mode) {
             let partNumberValue = $('#partNumberDropdown').val();
             let compositeSNPN = $('#searchBox').val();
 
+            // Convert to uppercase and check if conversion was needed
+            const upperSearchBoxValue = searchBoxValue.toUpperCase();
+            if (upperSearchBoxValue !== searchBoxValue) {
+                // Update the input box with uppercase value
+                $('#searchBox').val(upperSearchBoxValue);
+                searchBoxValue = upperSearchBoxValue;
+                compositeSNPN = upperSearchBoxValue;
+            }
+
             const toggleMode = getCookie('mode'); 
 
             if (searchBoxValue.includes('_')) {
@@ -622,6 +631,12 @@ function setMode(mode) {
                                     console.error('Missing expected fields in result:', result);
                                 }
                             });
+
+                            // After results are displayed, focus and select the search box text
+                            const searchBox = $('#searchBox');
+                            searchBox.focus();
+                            searchBox.select();
+                            
                         } else {
                             console.error('Invalid response:', response);
                         }
