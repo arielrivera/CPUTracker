@@ -933,14 +933,14 @@ function setMode(mode) {
 
     // RawFailures column handling
     // Read the cookie on page load
-    // let showRawFailures = getCookie("show_raw_failures") === "true";
-    // $("#show-raw-failures").prop("checked", showRawFailures);
-    // toggleRawFailureColumn(showRawFailures);
+    let showRawFailures = getCookie("show_raw_failures") === "true";
+    $("#show-raw-failures").prop("checked", showRawFailures);
+    toggleRawFailureColumn(showRawFailures);
 
     // Event listener for checkbox change
     $("#show-raw-failures").change(function() {
         let isChecked = $(this).is(":checked");
-        // setCookie("show_raw_failures", isChecked, 30); // Save for 30 days
+        setCookie("show_raw_failures", isChecked, 30); // Save for 30 days
         toggleRawFailureColumn(isChecked);
     });
 
