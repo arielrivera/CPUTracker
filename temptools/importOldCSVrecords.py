@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 # Database path - using the same path as the main application
-DB_PATH = os.getenv('CPUTRACKER_DB_PATH', 'cputracker.db')
+DB_PATH = os.getenv('CPUTRACKER_DB_PATH', os.path.join('database', 'cputracker.db'))
 
 def get_db():
     """Create a database connection"""
@@ -31,8 +31,8 @@ def process_csv():
     cursor.execute('SELECT serial_number FROM UNITS')
     existing_serials = {row['serial_number'] for row in cursor.fetchall()}
 
-    # Read the CSV file
-    with open(csv_path, 'r', encoding='utf-8') as csvfile:
+    # Read the CSV file with 'latin-1' encoding to handle special characters
+    with open(csv_path, 'r', encoding='latin-1') as csvfile:
         reader = csv.DictReader(csvfile)
         
         # Group records by serial number
