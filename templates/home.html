@@ -113,7 +113,7 @@
 </div>
 
 <!-- Bootstrap Modal to add new part number-->
-<div class="modal fade" id="addPartModal" tabindex="-1" role="dialog" aria-labelledby="addPartModalLabel" aria-hidden="true">
+<div class="modal fade" id="addPartModal" tabindex="-1" role="dialog" aria-labelledby="addPartModalLabel">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -134,7 +134,7 @@
   </div>
 
 <!-- Edit Modal -->
-<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -210,9 +210,7 @@
                         </div>
                     </div>
 
-
                 </form>
-                
                 
                 <div id="editAlert" class="alert alert-dismissible fade show" role="alert" style="display: none;">
                     <span id="editAlertMessage"></span>
@@ -222,11 +220,9 @@
                 </div>
             </div>
             <div class="modal-footer container"> 
-                
                 <button type="button" class="btn btn-danger text-nowrap" id="deleteRecordButton">Delete record</button> 
                 <button type="button" class="btn btn-secondary text-nowrap" id="dismissButton" data-dismiss="modal" onclick="window.location.href='/'">Dismiss</button> 
-                <button type="button" class="btn btn-success text-nowrap" id="saveChangesButton" disabled>Save changes</button> 
-                
+                <button type="button" class="btn btn-success text-nowrap" id="saveChangesButton">Save changes</button> 
             </div>
         </div>
     </div>
@@ -234,7 +230,7 @@
 
 
 <!-- Host File Modal -->
-<div class="modal fade" id="hostFileModal" tabindex="-1" role="dialog" aria-labelledby="hostFileModalLabel" aria-hidden="true">
+<div class="modal fade" id="hostFileModal" tabindex="-1" role="dialog" aria-labelledby="hostFileModalLabel">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -265,7 +261,7 @@
 
 
 
-<div class="modal fade" id="hostStatusModal" tabindex="-1" role="dialog" aria-labelledby="hostStatusModalLabel" aria-hidden="true">
+<div class="modal fade" id="hostStatusModal" tabindex="-1" role="dialog" aria-labelledby="hostStatusModalLabel">
     <div class="modal-dialog modal-xl custom-modal-height" role="document">
         <div class="modal-content custom-modal-background">
             <div class="modal-header">
@@ -283,6 +279,10 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Remove custom CSS styles as we'll use Bootstrap classes */
+</style>
 
 <script>
 // Shared utility functions
@@ -433,6 +433,16 @@ function setMode(mode) {
     }); // End message area handling
 
     $(document).ready(function() {
+        // Handle modal show/hide with inert attribute
+        $('.modal').on('show.bs.modal', function() {
+            $(this).removeAttr('inert');
+        }).on('hide.bs.modal', function() {
+            $(this).attr('inert', '');
+        });
+
+        // Set initial inert state for all modals
+        $('.modal').attr('inert', '');
+
         const notification = $('#notification');
         function showNotification(message) {
             notification.text(message);
@@ -772,9 +782,61 @@ function setMode(mode) {
 
     });
 
+        // Track form changes
+        let hasUnsavedChanges = false;
+        let originalValues = {};
+
+        // Check for actual changes when form fields are modified
+        function checkForChanges() {
+            const currentValues = {
+                comp_snpn: $('#comp_snpn').val(),
+                serialNumber: $('#serialNumber').val(),
+                partNumber: $('#partNumber').val(),
+                datecode: $('#datecode').val(),
+                country: $('#country').val(),
+                rawFailure: $('#rawFailure').val(),
+                testResult: $('#testResult').val()
+            };
+
+            // Compare current values with original values and update visual indicators
+            Object.keys(currentValues).forEach(key => {
+                const field = $(`#${key}`);
+                if (currentValues[key] !== originalValues[key]) {
+                    // Use Bootstrap's warning classes for changed fields
+                    field.removeClass('is-valid is-invalid').addClass('border-warning bg-warning bg-opacity-25');
+                } else {
+                    field.removeClass('border-warning bg-warning bg-opacity-25');
+                }
+            });
+
+            // Check if any changes exist
+            hasUnsavedChanges = Object.keys(currentValues).some(key => 
+                currentValues[key] !== originalValues[key]
+            );
+        }
+
+        // Store original values when modal is shown
+        $('#editModal').on('show.bs.modal', function() {
+            // Store original values of all form fields
+            originalValues = {
+                comp_snpn: $('#comp_snpn').val(),
+                serialNumber: $('#serialNumber').val(),
+                partNumber: $('#partNumber').val(),
+                datecode: $('#datecode').val(),
+                country: $('#country').val(),
+                rawFailure: $('#rawFailure').val(),
+                testResult: $('#testResult').val()
+            };
+            hasUnsavedChanges = false;
+            
+            // Remove all change indicators
+            $('#editForm input, #editForm select, #editForm textarea')
+                .removeClass('border-warning bg-warning bg-opacity-25 is-valid is-invalid');
+        });
+
         // Enable the "Save Changes" button when form fields are changed
         $('#editForm input, #editForm select, #editForm textarea').on('input change', function() {
-            $('#saveChangesButton').prop('disabled', false);
+            checkForChanges();
         });
 
         // Handle datecode input for suggestions
@@ -855,6 +917,20 @@ function setMode(mode) {
                     $('#saveChangesButton').prop('disabled', false).text('Save changes');
                     
                     if (response.success) {
+                        hasUnsavedChanges = false;
+                        // Update original values to match current values
+                        originalValues = {
+                            comp_snpn: $('#comp_snpn').val(),
+                            serialNumber: $('#serialNumber').val(),
+                            partNumber: $('#partNumber').val(),
+                            datecode: $('#datecode').val(),
+                            country: $('#country').val(),
+                            rawFailure: $('#rawFailure').val(),
+                            testResult: $('#testResult').val()
+                        };
+                        // Remove all change indicators
+                        $('#editForm input, #editForm select, #editForm textarea')
+                            .removeClass('border-warning bg-warning bg-opacity-25 is-valid is-invalid');
                         showAlert('Changes saved successfully.', 'success');
                         refreshTableData();
                     } else {
