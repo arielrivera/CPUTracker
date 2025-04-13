@@ -726,16 +726,29 @@ function setMode(mode) {
             $('#partNumber').val(row.eq(2).text());
             $('#datecode').val(row.eq(3).text());
             $('#country').val(row.eq(4).text());
-            // $('#testResult').val(row.eq(6).text());
-                // Get only the text from the test result cell
+            
+            // Get only the text from the test result cell
             const testResultText = row.eq(6).contents().filter(function() {
                 return this.nodeType === Node.TEXT_NODE;
-            }).text();
+            }).text().trim();
             console.log('testResultText:'+testResultText);
             
             $('#rawFailure').val(row.eq(5).text());
+            
+            // Store original values before showing modal
+            originalValues = {
+                comp_snpn: composite_snpn,
+                serialNumber: row.eq(1).text(),
+                partNumber: row.eq(2).text(),
+                datecode: row.eq(3).text(),
+                country: row.eq(4).text(),
+                rawFailure: row.eq(5).text(),
+                testResult: testResultText
+            };
+            
+            // Show modal and set test result value after storing original values
             $('#editModal').modal('show');
-            $('#testResult').val(testResultText.trim()).change();
+            $('#testResult').val(testResultText);
         });
 
     
@@ -798,40 +811,60 @@ function setMode(mode) {
                 testResult: $('#testResult').val()
             };
 
+            console.log('Current values:', currentValues);
+            console.log('Original values:', originalValues);
+
             // Compare current values with original values and update visual indicators
             Object.keys(currentValues).forEach(key => {
                 const field = $(`#${key}`);
-                if (currentValues[key] !== originalValues[key]) {
-                    // Use Bootstrap's warning classes for changed fields
-                    field.removeClass('is-valid is-invalid').addClass('border-warning bg-warning bg-opacity-25');
+                if (key === 'testResult') {
+                    // Special handling for test result - normalize both values for comparison
+                    const current = currentValues[key].trim().toLowerCase();
+                    const original = originalValues[key].trim().toLowerCase();
+                    console.log(`Comparing test result:`, {
+                        current: current,
+                        original: original,
+                        areEqual: current === original
+                    });
+                    if (current !== original) {
+                        console.log(`Test result field ${key} has changed - adding highlight`);
+                        field.removeClass('is-valid is-invalid').addClass('border-warning bg-warning bg-opacity-25');
+                    } else {
+                        console.log(`Test result field ${key} unchanged - removing highlight`);
+                        field.removeClass('border-warning bg-warning bg-opacity-25');
+                    }
                 } else {
-                    field.removeClass('border-warning bg-warning bg-opacity-25');
+                    console.log(`Comparing field ${key}:`, {
+                        current: currentValues[key],
+                        original: originalValues[key],
+                        areEqual: currentValues[key] === originalValues[key]
+                    });
+                    if (currentValues[key] !== originalValues[key]) {
+                        console.log(`Field ${key} has changed - adding highlight`);
+                        field.removeClass('is-valid is-invalid').addClass('border-warning bg-warning bg-opacity-25');
+                    } else {
+                        console.log(`Field ${key} unchanged - removing highlight`);
+                        field.removeClass('border-warning bg-warning bg-opacity-25');
+                    }
                 }
             });
 
             // Check if any changes exist
             hasUnsavedChanges = Object.keys(currentValues).some(key => 
-                currentValues[key] !== originalValues[key]
+                key === 'testResult' 
+                    ? currentValues[key].trim().toLowerCase() !== originalValues[key].trim().toLowerCase()
+                    : currentValues[key] !== originalValues[key]
             );
+            console.log('Has unsaved changes:', hasUnsavedChanges);
         }
 
         // Store original values when modal is shown
         $('#editModal').on('show.bs.modal', function() {
-            // Store original values of all form fields
-            originalValues = {
-                comp_snpn: $('#comp_snpn').val(),
-                serialNumber: $('#serialNumber').val(),
-                partNumber: $('#partNumber').val(),
-                datecode: $('#datecode').val(),
-                country: $('#country').val(),
-                rawFailure: $('#rawFailure').val(),
-                testResult: $('#testResult').val()
-            };
-            hasUnsavedChanges = false;
-            
             // Remove all change indicators
             $('#editForm input, #editForm select, #editForm textarea')
                 .removeClass('border-warning bg-warning bg-opacity-25 is-valid is-invalid');
+            console.log('Removed all change indicators');
+            hasUnsavedChanges = false;
         });
 
         // Enable the "Save Changes" button when form fields are changed
