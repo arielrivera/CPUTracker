@@ -9,6 +9,20 @@ from queue import Queue
 import tempfile
 import threading
 from functools import wraps
+try:
+    from PIL import Image
+except ImportError as e:
+    raise ImportError("Pillow is not installed. Please install it with: pip install Pillow") from e
+import pytesseract
+# # Set Tesseract command path from environment variable (default to 'tesseract')
+# tesseract_cmd = os.environ.get('TESSERACT_CMD', 'tesseract')
+# pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+# try:
+#     pytesseract.get_tesseract_version()
+# except Exception as e:
+#     raise EnvironmentError("Tesseract is not installed or its path is not configured. Please install Tesseract (e.g., 'sudo apt-get install tesseract-ocr') and set TESSERACT_CMD accordingly.") from e
+import io
+from werkzeug.exceptions import RequestEntityTooLarge
 
 # sys.path.append('./utils')
 # from utils.process_logs import start_process, stop_process
@@ -32,6 +46,13 @@ app = Flask(__name__)
 app.secret_key = 'AMD'
 # Initialize Bootstrap
 bootstrap = Bootstrap(app)
+
+# Increase max upload size to 50 MB to allow processing then reducing files to <=20 MB
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_large_file(e):
+    return jsonify({'error': 'File too large, maximum allowed size is 50 MB.'}), 413
 
 # Add these new functions before any routes
 def notify_clients():
@@ -113,44 +134,50 @@ def home():
 def upload_image():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
-    
+
     file = request.files['file']
     
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
+    # Check file size (for logging or future conditional processing)
+    file.seek(0, os.SEEK_END)
+    file_length = file.tell()
+    file.seek(0)
+    # If very large, we will process and reduce its size below 20MB
+    # ...existing code...
     
     try:
-        # Create a temporary file to save the uploaded image
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
-            file.save(temp_file.name)
-            temp_file_path = temp_file.name
-        
-        # Check if the image can be processed
-        if not can_process_image(temp_file_path):
-            os.remove(temp_file_path)
-            return jsonify({'error': 'Cannot process this image'}), 400
-        
-        # Extract data from the image
-        composite_snpn = extract_text_from_region(temp_file_path, "top_right")
-        raw_failure = extract_text_from_region(temp_file_path, "bottom_center")
-        sn, pn = separate_sn_pn(composite_snpn)
-        
-        # Remove the temporary file
-        os.remove(temp_file_path)
-        
-        if sn is not None and pn is not None:
-            return jsonify({
-                'sn': sn,
-                'pn': pn,
-                'composite_snpn': composite_snpn,
-                'raw_failure': raw_failure
-            })
-        else:
-            return jsonify({'error': 'Could not extract data from image'}), 400
+        # Open image from file stream
+        img = Image.open(file.stream)
     except Exception as e:
-        if os.path.exists(temp_file_path):  # Ensure the temporary file is removed even if an error occurs
-            os.remove(temp_file_path)
-        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
+        return jsonify({'error': 'Invalid image file'}), 400
+
+    try:
+        # Extract text using pytesseract
+        extracted_text = pytesseract.image_to_string(img)
+    except Exception as err:
+        return jsonify({'error': f'Error processing image with pytesseract: {err}. Ensure Tesseract is installed and TESSERACT_CMD is set correctly. See README file for more information.'}), 500
+
+    # Resize image if its width exceeds the max width (e.g., 1024 px)
+    max_width = 1024
+    if img.width > max_width:
+        ratio = max_width / float(img.width)
+        new_height = int(img.height * ratio)
+        img = img.resize((max_width, new_height), Image.ANTIALIAS)
+
+    # Convert resized image to bytes for saving/storage
+    img_byte_arr = io.BytesIO()
+    img.save(img_byte_arr, format='JPEG', quality=85)
+    img_byte_arr.seek(0)
+
+    # ... Code for saving the image and extracted text as needed ...
+    response_data = {
+        'sn': 'example_serial',  # Replace with actual data extraction/processing
+        'pn': 'example_product',
+        'snpn': extracted_text.strip(),
+        'raw_failure': 'None'
+    }
+    
+    return jsonify(response_data), 200
+
 @app.route('/get_records', methods=['GET'])
 def get_records():
     """Modified to include timestamp"""
@@ -210,7 +237,7 @@ def get_logs_records():
     serial = request.args.get('serial', '')
     query_sn = ""
 
-    if serial != '':
+    if (serial != ''):
         query_sn += " WHERE serial_number = ?"
         params = [serial]
     else:

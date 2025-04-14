@@ -36,11 +36,13 @@
             var hasImages = false;
 
             if (singleImage) {
-                formData.append('image', singleImage);
+                // Changed key from 'image' to 'file'
+                formData.append('file', singleImage);
                 hasImages = true;
             } else if (multipleImages.length > 0) {
                 for (var i = 0; i < multipleImages.length; i++) {
-                    formData.append('images', multipleImages[i]);
+                    // Changed key from 'images' to 'file'
+                    formData.append('file', multipleImages[i]);
                 }
                 hasImages = true;
             }
@@ -101,6 +103,6 @@
         }
     </script>
 
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="/static/bootstrap.min.js"></script>
 </body>
 </html>

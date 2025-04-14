@@ -4,3 +4,7 @@ Flask-Bootstrap
 py7zr
 # alive_progress
 Flask-Talisman
+Pillow
+python-dotenv
+# pytesseract-ocr
+# libtesseract-dev
