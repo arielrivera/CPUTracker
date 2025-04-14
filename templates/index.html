@@ -97,6 +97,14 @@
                 window.location.href = '/logout';
             }
 
+            // Load content for Images tab
+            if (targetId === '#images') {
+                $.get('/images', function(data) {
+                    $('#images').html(data);
+                });
+            }
+
+
 
         });
 
@@ -241,6 +249,9 @@
                 <a class="nav-link" id="logs-tab" data-toggle="tab" href="#logs" role="tab" aria-controls="logs" aria-selected="false">Logs</a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" id="images-tab" data-toggle="tab" href="#images" role="tab" aria-controls="images" aria-selected="false">Images</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" id="settings-tab" data-toggle="tab" href="#settings" role="tab" aria-controls="settings" aria-selected="false">Settings</a>
             </li>
             <li class="nav-item">
@@ -261,6 +272,10 @@
             <div id="logs" class="tab-pane fade"  role="tabpanel" aria-labelledby="logs-tab">
 
                
+            </div>
+            
+            <div id="images" class="tab-pane fade" role="tabpanel" aria-labelledby="images-tab">
+
             </div>
 
             <div id="settings" class="tab-pane fade"  role="tabpanel" aria-labelledby="settings-tab">

@@ -6,6 +6,7 @@ from datetime import datetime
 import subprocess
 import json
 from queue import Queue
+import tempfile
 import threading
 from functools import wraps
 
@@ -13,6 +14,7 @@ from functools import wraps
 # from utils.process_logs import start_process, stop_process
 
 # Use environment variable to switch between development and production
+from image_processing import can_process_image, extract_text_from_region, separate_sn_pn
 DB_PATH = os.getenv('CPUTRACKER_DB_PATH', '/app/database/cputracker.db')
 
 # Add this near the top with other global variables
@@ -107,6 +109,48 @@ def home():
     return render_template('home.html', parts=parts, test_results=test_results)
 # units=units, 
 
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    try:
+        # Create a temporary file to save the uploaded image
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
+            file.save(temp_file.name)
+            temp_file_path = temp_file.name
+        
+        # Check if the image can be processed
+        if not can_process_image(temp_file_path):
+            os.remove(temp_file_path)
+            return jsonify({'error': 'Cannot process this image'}), 400
+        
+        # Extract data from the image
+        composite_snpn = extract_text_from_region(temp_file_path, "top_right")
+        raw_failure = extract_text_from_region(temp_file_path, "bottom_center")
+        sn, pn = separate_sn_pn(composite_snpn)
+        
+        # Remove the temporary file
+        os.remove(temp_file_path)
+        
+        if sn is not None and pn is not None:
+            return jsonify({
+                'sn': sn,
+                'pn': pn,
+                'composite_snpn': composite_snpn,
+                'raw_failure': raw_failure
+            })
+        else:
+            return jsonify({'error': 'Could not extract data from image'}), 400
+    except Exception as e:
+        if os.path.exists(temp_file_path):  # Ensure the temporary file is removed even if an error occurs
+            os.remove(temp_file_path)
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 @app.route('/get_records', methods=['GET'])
 def get_records():
     """Modified to include timestamp"""
@@ -138,6 +182,23 @@ def get_records():
 @app.route('/logs')
 def logs():
     return render_template('logs.html')
+
+@app.route('/images')
+def images():
+    return render_template('images.html')
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # def decompress_text(compressed_text):
 #     return zlib.decompress(compressed_text).decode('utf-8')
