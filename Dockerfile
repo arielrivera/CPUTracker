@@ -1,6 +1,8 @@
 FROM python:3.9-slim
 # Install Tesseract OCR and its dependencies
-RUN apt-get update && apt-get install -y tesseract-ocr libtesseract-dev
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    libtesseract-dev \
 # ...existing code...
 WORKDIR /app
 # Copy requirements and install Python packages

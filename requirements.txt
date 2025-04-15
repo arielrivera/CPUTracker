@@ -6,5 +6,4 @@ py7zr
 Flask-Talisman
 Pillow
 python-dotenv
-# pytesseract-ocr
-# libtesseract-dev
+pytesseract

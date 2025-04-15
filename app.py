@@ -15,13 +15,13 @@ except ImportError as e:
     raise ImportError("Pillow is not installed. Please install it with: pip install Pillow") from e
 import pytesseract
 # # Set Tesseract command path from environment variable (default to 'tesseract')
-# tesseract_cmd = os.environ.get('TESSERACT_CMD', 'tesseract')
-# pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+tesseract_cmd = os.environ.get('TESSERACT_CMD', 'tesseract')
+pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
 # try:
 #     pytesseract.get_tesseract_version()
 # except Exception as e:
 #     raise EnvironmentError("Tesseract is not installed or its path is not configured. Please install Tesseract (e.g., 'sudo apt-get install tesseract-ocr') and set TESSERACT_CMD accordingly.") from e
-import io
+# import io
 from werkzeug.exceptions import RequestEntityTooLarge
 
 # sys.path.append('./utils')
