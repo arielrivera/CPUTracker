@@ -15,7 +15,7 @@ except ImportError as e:
     raise ImportError("Pillow is not installed. Please install it with: pip install Pillow") from e
 import pytesseract
 # # Set Tesseract command path from environment variable (default to 'tesseract')
-tesseract_cmd = os.environ.get('TESSERACT_CMD', 'tesseract')
+tesseract_cmd = os.environ.get('TESSERACT_CMD', '/usr/local/bin/pytesseract')
 pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
 # try:
 #     pytesseract.get_tesseract_version()
